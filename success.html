@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Successful | Glow Mart</title>
+<link rel="icon" type="image/png" href="images/logo.png">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Poppins', Arial, sans-serif;
+  background: linear-gradient(135deg, #fff0f5, #ffe4ec);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.container {
+  background: white;
+  padding: 50px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+}
+.success-icon {
+  font-size: 80px;
+  color: #28a745;
+  margin-bottom: 20px;
+  animation: scaleIn 0.5s ease;
+}
+@keyframes scaleIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+h1 {
+  color: #ff4d7e;
+  margin-bottom: 15px;
+  font-size: 2em;
+}
+p {
+  color: #666;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+.button-group {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+button, a {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: inline-block;
+}
+.btn-primary {
+  background: #ff4d7e;
+  color: white;
+}
+.btn-primary:hover {
+  background: #e04470;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 77, 126, 0.3);
+}
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+.order-details {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 10px;
+  text-align: left;
+}
+.order-details h3 {
+  color: #ff4d7e;
+  margin-bottom: 10px;
+}
+.order-details p {
+  margin: 5px 0;
+  color: #333;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="success-icon">✅</div>
+  <h1>Payment Successful!</h1>
+  <p>Thank you for your purchase. Your order has been confirmed and will be processed shortly.</p>
+  
+  <div id="order-details" class="order-details" style="display:none;">
+    <h3>Order Details</h3>
+    <p id="session-info"></p>
+  </div>
+
+  <div class="button-group">
+    <a href="index.html" class="btn-primary">Continue Shopping</a>
+    <a href="cart.html" class="btn-secondary">View Cart</a>
+  </div>
+</div>
+
+<script type="module">
+import { db, collection, doc, setDoc } from './firebase/firebase.js';
+
+// Get session ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const sessionId = urlParams.get('session_id');
+
+// Get cart data before clearing (if available)
+// Try to get from sessionStorage first (saved before redirect), then localStorage
+let orderItems = [];
+try {
+  // Check if cart was saved in sessionStorage before redirect
+  const savedCartSession = sessionStorage.getItem('pendingOrder');
+  if (savedCartSession) {
+    orderItems = JSON.parse(savedCartSession);
+    sessionStorage.removeItem('pendingOrder'); // Clean up
+    console.log('📦 Loaded cart from sessionStorage');
+  } else {
+    // Fallback to localStorage
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      orderItems = JSON.parse(savedCart);
+      console.log('📦 Loaded cart from localStorage');
+    }
+  }
+} catch (e) {
+  console.error('Error reading cart:', e);
+}
+
+// Calculate total
+const totalAmount = orderItems.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
+
+// Save order to Firebase
+async function saveOrderToFirebase() {
+  if (!sessionId || orderItems.length === 0) {
+    console.log('⚠️ No session ID or cart items to save');
+    return;
+  }
+
+  try {
+    console.log('💾 Saving order to Firebase...');
+    
+    // Generate order ID
+    const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    
+    // Get user info if available
+    const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+    const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+    
+    // Create order document
+    const orderData = {
+      orderId: orderId,
+      sessionId: sessionId,
+      items: orderItems.map(item => ({
+        id: item.id || item.name,
+        name: item.name || item.title || item.id,
+        price: parseFloat(item.price) || 0,
+        quantity: parseInt(item.qty) || 1,
+        image: item.image || item.img || '',
+        total: (parseFloat(item.price) || 0) * (parseInt(item.qty) || 1)
+      })),
+      totalAmount: totalAmount,
+      status: 'pending', // pending, processing, shipped, delivered, cancelled
+      customerEmail: userInfo.email || adminUser.email || 'guest@glowmart.com',
+      customerName: userInfo.name || adminUser.name || 'Guest',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    console.log('📦 Order data:', orderData);
+    
+    // Save to Firestore
+    const ordersRef = collection(db, 'orders');
+    await setDoc(doc(ordersRef, orderId), orderData);
+    
+    console.log('✅ Order saved to Firebase:', orderId);
+    
+    // Display order details
+    const orderDetails = document.getElementById('order-details');
+    const sessionInfo = document.getElementById('session-info');
+    orderDetails.style.display = 'block';
+    sessionInfo.innerHTML = `
+      <strong>Order ID:</strong> ${orderId}<br>
+      <strong>Total Amount:</strong> ₨${totalAmount.toLocaleString()}<br>
+      <strong>Items:</strong> ${orderItems.length} item(s)<br>
+      <strong>Status:</strong> Pending
+    `;
+    
+    // Clear cart after successful save
+    localStorage.removeItem('cart');
+    console.log('🛒 Cart cleared');
+    
+  } catch (error) {
+    console.error('❌ Error saving order to Firebase:', error);
+    console.error('  Message:', error.message);
+    console.error('  Code:', error.code);
+    
+    // Still show order info even if Firebase save fails
+    const orderDetails = document.getElementById('order-details');
+    const sessionInfo = document.getElementById('session-info');
+    orderDetails.style.display = 'block';
+    sessionInfo.innerHTML = `
+      <strong>Session ID:</strong> ${sessionId}<br>
+      <strong>Total Amount:</strong> ₨${totalAmount.toLocaleString()}<br>
+      <strong>Items:</strong> ${orderItems.length} item(s)<br>
+      <small style="color: #dc3545;">⚠️ Order saved locally. Please contact support with Session ID.</small>
+    `;
+  }
+}
+
+// Save order when page loads
+if (sessionId) {
+  saveOrderToFirebase();
+} else {
+  console.log('⚠️ No session ID found in URL');
+}
+
+// Auto-redirect after 10 seconds (optional)
+// setTimeout(() => {
+//   window.location.href = 'index.html';
+// }, 10000);
+</script>
+<script src="js/cookies.js"></script>
+</body>
+</html>
+

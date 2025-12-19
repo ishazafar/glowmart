@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glow Mart - Admin Login</title>
+  <link rel="icon" type="image/png" href="../images/logo.png" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      backdrop-filter: blur(5px);
+    }
+    h2 {
+      color: #1e3c72;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus {
+      border-color: #1e3c72;
+      box-shadow: 0 0 5px rgba(30, 60, 114, 0.5);
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #1e3c72;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #16325a;
+    }
+    .error {
+      color: red;
+      font-size: 13px;
+      text-align: left;
+      margin-left: 5%;
+      margin-top: -8px;
+    }
+    .success {
+      color: green;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* Wrapper for password input + eye */
+    .password-wrapper {
+      position: relative;
+      width: 100%;
+      margin: 10px auto;
+    }
+
+    #togglePassword {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 16px;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div style="display:flex; justify-content:center; margin-bottom:20px;">
+    <div style="
+      width:60px; 
+      height:60px; 
+      border-radius:50%; 
+      overflow:hidden; 
+      border:2px solid #fff; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    ">
+      <img src="../images/logo.png" alt="Glow Mart Logo" style="width:100%; height:100%; object-fit:cover;">
+    </div>
+  </div>
+
+  <h2>Admin Login 🔒</h2>
+
+  <input type="email" id="adminEmail" placeholder="Admin Email" required autocomplete="off">
+  <div id="emailError" class="error"></div>
+
+  <!-- Password field with eye inside -->
+  <div class="password-wrapper">
+    <input type="password" id="adminPass" placeholder="Password" required autocomplete="off">
+    <span id="togglePassword">&#128065;</span>
+  </div>
+  <div id="passError" class="error"></div>
+
+  <button id="loginBtn">Login</button>
+  <div id="successMsg" class="success"></div>
+  
+  <p style="margin-top: 20px; font-size: 12px; color: #666;">
+    Don't have an admin account? Use seed-products.html to create one.
+  </p>
+</div>
+
+<script type="module">
+import { auth, signInWithEmailAndPassword } from '../firebase/firebase.js';
+import { db, doc, getDoc } from '../firebase/firebase.js';
+
+const loginBtn = document.getElementById('loginBtn');
+const adminEmail = document.getElementById('adminEmail');
+const adminPass = document.getElementById('adminPass');
+const emailError = document.getElementById('emailError');
+const passError = document.getElementById('passError');
+const successMsg = document.getElementById('successMsg');
+const togglePassword = document.getElementById('togglePassword');
+
+// Toggle password visibility
+togglePassword.addEventListener('click', () => {
+  const type = adminPass.getAttribute('type') === 'password' ? 'text' : 'password';
+  adminPass.setAttribute('type', type);
+});
+
+// Admin Login with Firebase Auth
+loginBtn.addEventListener('click', async () => {
+  const email = adminEmail.value.trim();
+  const password = adminPass.value;
+
+  emailError.textContent = '';
+  passError.textContent = '';
+  successMsg.textContent = '';
+
+  if (email === '') {
+    emailError.textContent = '❌ Please enter your email';
+    return;
+  }
+  if (password === '') {
+    passError.textContent = '❌ Please enter your password';
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Logging in...';
+
+  try {
+    console.log('🔐 Attempting admin login...');
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    console.log('✅ Authentication successful:', user.uid);
+    
+    // Check if user is admin
+    console.log('🔍 Checking admin role...');
+    const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+    
+    if (adminDoc.exists() && adminDoc.data().role === 'admin') {
+      console.log('✅ Admin role confirmed');
+      successMsg.textContent = '✅ Admin login successful!';
+      
+      // Store admin session in cookies
+      if (typeof CookieManager !== 'undefined') {
+        CookieManager.setSession('adminUser', {
+          uid: user.uid,
+          email: user.email,
+          role: 'admin',
+          loginTime: new Date().toISOString()
+        }, 7); // 7 days session
+      }
+      // Also store in localStorage as fallback
+      localStorage.setItem('adminUser', JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        role: 'admin'
+      }));
+      
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 1500);
+    } else {
+      // Also check users collection
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists() && userDoc.data().role === 'admin') {
+        console.log('✅ Admin role confirmed from users collection');
+        successMsg.textContent = '✅ Admin login successful!';
+        
+        // Store admin session in cookies
+        if (typeof CookieManager !== 'undefined') {
+          CookieManager.setSession('adminUser', {
+            uid: user.uid,
+            email: user.email,
+            role: 'admin',
+            loginTime: new Date().toISOString()
+          }, 7);
+        }
+        localStorage.setItem('adminUser', JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          role: 'admin'
+        }));
+        
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 1500);
+      } else {
+        // Sign out if not admin
+        await auth.signOut();
+        passError.textContent = '❌ Access denied. Admin privileges required.';
+        console.error('❌ User is not an admin');
+      }
+    }
+  } catch (error) {
+    console.error('❌ Login error:', error);
+    
+    if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+      passError.textContent = '❌ Invalid email or password';
+    } else if (error.code === 'auth/user-not-found') {
+      emailError.textContent = '❌ No account found with this email';
+    } else if (error.code === 'auth/too-many-requests') {
+      passError.textContent = '⚠️ Too many attempts. Try again later.';
+    } else {
+      passError.textContent = '⚠️ ' + (error.message || 'Login failed, please try again');
+    }
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Login';
+  }
+});
+</script>
+
+</body>
+</html>

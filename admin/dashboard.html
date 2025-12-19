@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlowMart Admin - Dashboard</title>
+<link rel="icon" type="image/png" href="../images/logo.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif}
+:root{
+  --primary:#1e3c72;
+  --accent:#1e3c72;
+  --muted:#f6f6f9;
+  --card:#ffffff;
+  --text:#222;
+  --ghost:#6b7280;
+  --shadow:0 6px 18px rgba(16,24,40,0.06);
+}
+html,body{height:100%;background:linear-gradient(180deg,#fff 0%,#fffafc 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.topbar{
+  position:absolute;
+  top:0;
+  left:0;
+  width:calc(100% - 24px);
+  margin:12px;
+  z-index:100;
+  border-radius:12px;
+  background:var(--primary);
+  display:flex;
+  align-items:center;
+  padding:12px 20px;
+  gap:12px;
+  cursor:move;
+  user-select:none;
+}
+
+.nav-left{display:flex;align-items:center;gap:12px}
+.nav-left img{height:32px;width:32px;object-fit:cover;border-radius:6px}
+.nav-left h1{font-size:16px;color:#fff;margin-left:6px}
+
+.nav-center{display:flex;gap:8px;align-items:center;margin-left:20px}
+.nav-center a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:8px;font-weight:600;font-size:14px}
+.nav-center a.active{background:rgba(255,255,255,0.2)}
+
+.search-bar{position:relative;display:flex;align-items:center;margin-left:auto}
+#searchInput{
+  padding:6px 36px 6px 10px;
+  border-radius:20px;
+  border:none;
+  outline:none;
+  font-size:14px;
+  transition: width 0.35s ease, padding 0.2s;
+  width:0;
+  background:#fff;
+  color:#333;
+}
+#searchInput.expanded{width:200px;}
+.search-bar .search-icon{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:16px;
+  cursor:pointer;
+  color:#333;
+  pointer-events:auto;
+}
+
+/* LAYOUT */
+.layout{display:flex;gap:20px;padding:18px;margin-top:56px}
+.sidebar{width:240px;min-height:calc(100vh - 76px);overflow:auto}
+.sidebar .menu{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);height:100%;overflow:auto}
+.menu a{display:flex;gap:10px;align-items:center;padding:10px;border-radius:8px;color:var(--ghost);text-decoration:none;margin-bottom:6px}
+.menu a.active{background:linear-gradient(90deg,var(--accent),#1e3c72);color:#fff}
+
+.content{flex:1;overflow:auto}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}
+.card{background:var(--card);padding:16px;border-radius:12px;box-shadow:var(--shadow)}
+.card h3{font-size:13px;color:var(--ghost);margin-bottom:8px}
+.card p{font-size:20px;font-weight:700}
+.grid-2{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #f1f1f6}
+th{font-size:13px;color:var(--ghost)}
+.form-row{display:flex;gap:10px}.form-row .field{flex:1}
+label{display:block;font-size:13px;color:var(--ghost);margin-bottom:6px}
+input,select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #eee;font-size:14px}
+button.btn{background:var(--primary);color:#fff;padding:10px 12px;border:0;border-radius:8px;cursor:pointer}
+button.btn.reset{background:#eee;color:var(--text)}
+.inlineMsg{margin-left:8px;color:var(--primary)}
+.sidebar::-webkit-scrollbar,.content::-webkit-scrollbar{height:8px;width:8px}
+.sidebar::-webkit-scrollbar-thumb,.content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:8px}
+</style>
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="nav-left">
+    <img id="siteLogo" src="../images/logo.png" alt="GlowMart logo">
+    <h1>GlowMart Admin</h1>
+    <nav class="nav-center">
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="products.html">Products</a>
+      <a href="orders.html">Orders</a>
+      <a href="customers.html">Customers</a>
+    </nav>
+  </div>
+  <div class="search-bar">
+    <input id="searchInput" placeholder="Search..." />
+    <span class="search-icon">&#128269;</span>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="menu">
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="products.html">Products</a>
+      <a href="orders.html">Orders</a>
+      <a href="customers.html">Customers</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <section class="cards">
+      <div class="card"><h3>Total Sales</h3><p id="sales">PKR 125,430</p></div>
+      <div class="card"><h3>Orders</h3><p id="ordersCount">3</p></div>
+      <div class="card"><h3>Products</h3><p id="productsCount">3</p></div>
+      <div class="card"><h3>Customers</h3><p id="customersCount">128</p></div>
+    </section>
+
+    <div class="grid-2">
+      <div class="panel">
+        <h2>Recent Orders</h2>
+        <table>
+          <thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody id="ordersTable"></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Quick Add Product</h2>
+        <form id="addProductForm" autocomplete="off">
+          <div class="form-row"><div class="field"><label>Product Name</label><input name="name" required /></div></div>
+          <div class="form-row">
+            <div class="field"><label>Price (PKR)</label><input name="price" type="number" required /></div>
+            <div class="field"><label>Stock</label><input name="stock" type="number" required /></div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+            <button type="submit" class="btn">Add Product</button>
+            <button type="button" class="btn reset" onclick="resetForm()">Reset</button>
+          </div>
+          <div class="inlineMsg" id="addMsg"></div>
+        </form>
+      </div>
+    </div>
+
+    <section style="margin-top:18px">
+      <div class="panel">
+        <h2>Product List</h2>
+        <table>
+          <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
+          <tbody id="productsTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+import { db, collection, getDocs, query, orderBy, limit } from '../../firebase/firebase.js';
+
+const state = {
+  sales: 0,
+  orders: [],
+  products: [],
+  customers: 0
+};
+
+// Fetch orders from Firebase
+async function fetchOrders() {
+  try {
+    console.log('📦 Fetching orders from Firebase...');
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, orderBy('createdAt', 'desc'), limit(50));
+    const snapshot = await getDocs(q);
+    
+    state.orders = [];
+    let totalSales = 0;
+    const customerSet = new Set();
+    
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      state.orders.push({
+        id: data.orderId || doc.id,
+        customer: data.customerName || data.customerEmail || 'Guest',
+        amount: data.totalAmount || 0,
+        status: data.status || 'pending',
+        items: data.items || [],
+        createdAt: data.createdAt,
+        sessionId: data.sessionId
+      });
+      
+      totalSales += data.totalAmount || 0;
+      if (data.customerEmail) {
+        customerSet.add(data.customerEmail);
+      }
+    });
+    
+    state.sales = totalSales;
+    state.customers = customerSet.size;
+    
+    console.log(`✅ Loaded ${state.orders.length} orders from Firebase`);
+    console.log(`💰 Total Sales: PKR ${totalSales.toLocaleString()}`);
+    console.log(`👥 Unique Customers: ${state.customers}`);
+    
+    renderStats();
+    renderOrders();
+  } catch (error) {
+    console.error('❌ Error fetching orders:', error);
+    // Fallback to empty state
+    renderStats();
+    renderOrders();
+  }
+}
+
+// Fetch products from Firebase
+async function fetchProducts() {
+  try {
+    console.log('📦 Fetching products from Firebase...');
+    const productsRef = collection(db, 'products');
+    const snapshot = await getDocs(productsRef);
+    
+    state.products = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      state.products.push({
+        id: doc.id,
+        name: data.name,
+        price: data.price,
+        stock: data.stock || 0,
+        category: data.category
+      });
+    });
+    
+    console.log(`✅ Loaded ${state.products.length} products from Firebase`);
+    renderStats();
+    renderProducts();
+  } catch (error) {
+    console.error('❌ Error fetching products:', error);
+    renderStats();
+    renderProducts();
+  }
+}
+
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function renderStats() {
+  document.getElementById('sales').textContent = 'PKR ' + numberWithCommas(Math.round(state.sales));
+  document.getElementById('ordersCount').textContent = state.orders.length;
+  document.getElementById('productsCount').textContent = state.products.length;
+  document.getElementById('customersCount').textContent = state.customers;
+}
+
+function renderOrders() {
+  const tbody = document.getElementById('ordersTable');
+  tbody.innerHTML = '';
+  
+  if (state.orders.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#999;">No orders yet</td></tr>';
+    return;
+  }
+  
+  // Show recent 10 orders
+  const recentOrders = state.orders.slice(0, 10);
+  recentOrders.forEach(o => {
+    const tr = document.createElement('tr');
+    const statusColor = {
+      'pending': '#ffc107',
+      'processing': '#17a2b8',
+      'shipped': '#007bff',
+      'delivered': '#28a745',
+      'cancelled': '#dc3545'
+    }[o.status] || '#6c757d';
+    
+    tr.innerHTML = `
+      <td><strong>${o.id}</strong></td>
+      <td>${o.customer}</td>
+      <td>PKR ${numberWithCommas(Math.round(o.amount))}</td>
+      <td><span style="padding:4px 8px;border-radius:4px;background:${statusColor};color:white;font-size:12px;">${o.status}</span></td>
+    `;
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => {
+      // Show order details (you can create a modal or navigate to orders page)
+      // alert(`Order: ${o.id}\nCustomer: ${o.customer}\nItems: ${o.items.length}\nTotal: PKR ${numberWithCommas(Math.round(o.amount))}\nStatus: ${o.status}`);
+    };
+    tbody.appendChild(tr);
+  });
+}
+function renderProducts(){
+  const tbody=document.getElementById('productsTable');tbody.innerHTML='';
+  state.products.forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td contenteditable="true" class="editable">${p.name}</td>
+                    <td contenteditable="true" class="editable">${p.price}</td>
+                    <td contenteditable="true" class="editable">${p.stock}</td>
+                    <td>
+                      <button class='btn' onclick="saveProduct('${p.id}',this)">Save</button>
+                      <button class='btn' onclick="deleteProduct('${p.id}',this)">Delete</button>
+                      <span class='inlineMsg'></span>
+                    </td>`;
+    tbody.appendChild(tr);
+  });
+}
+function saveProduct(id,btn){
+  const tr=btn.closest('tr');
+  const name=tr.children[0].textContent.trim();
+  const price=Number(tr.children[1].textContent.trim());
+  const stock=Number(tr.children[2].textContent.trim());
+  if(!name||price<=0||stock<0){btn.nextElementSibling.textContent='Fill valid values';return;}
+  const p=state.products.find(x=>x.id===id);
+  if(p){p.name=name;p.price=price;p.stock=stock;}
+  renderProducts();renderStats();
+  btn.nextElementSibling.textContent='Saved';
+  setTimeout(()=>{btn.nextElementSibling.textContent=''},2000);
+}
+function deleteProduct(id,btn){
+  const idx=state.products.findIndex(x=>x.id===id);
+  if(idx>-1) state.products.splice(idx,1);
+  renderProducts();renderStats();
+  btn.nextElementSibling.textContent='Deleted';
+  setTimeout(()=>{btn.nextElementSibling.textContent=''},2000);
+}
+
+const addProductForm=document.getElementById('addProductForm');
+addProductForm.addEventListener('submit',function(e){
+  e.preventDefault();
+  const form=e.target,name=form.name.value.trim(),price=Number(form.price.value),stock=Number(form.stock.value);
+  if(!name||price<=0||stock<0){document.getElementById('addMsg').textContent='Please fill all fields properly';return;}
+  const newId='P'+String(state.products.length+1).padStart(3,'0');
+  state.products.push({id:newId,name,price,stock});
+  renderProducts(); renderStats(); form.reset();
+  document.getElementById('addMsg').textContent='Product added';
+  setTimeout(()=>{document.getElementById('addMsg').textContent=''},2000);
+});
+function resetForm(){document.getElementById('addProductForm').reset()}
+
+// Initialize on page load
+window.addEventListener('DOMContentLoaded', async () => {
+  await fetchOrders();
+  await fetchProducts();
+});
+
+/* SEARCH BAR */
+const searchInput=document.getElementById('searchInput');
+const searchIcon=document.querySelector('.search-icon');
+searchIcon.addEventListener('click',()=>searchInput.classList.toggle('expanded'));
+searchInput.addEventListener('input',function(e){
+  const q=e.target.value.trim().toLowerCase();
+  const otbody=document.getElementById('ordersTable'); otbody.innerHTML='';
+  const ptbody=document.getElementById('productsTable'); ptbody.innerHTML='';
+  if(q.length===0){renderOrders();renderProducts(); return;}
+  state.orders.filter(o=>o.id.toLowerCase().includes(q)||o.customer.toLowerCase().includes(q))
+    .forEach(o=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${o.id}</td><td>${o.customer}</td><td>PKR ${numberWithCommas(o.amount)}</td><td>${o.status}</td>`;otbody.appendChild(tr);});
+  state.products.filter(p=>p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q))
+    .forEach(p=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td contenteditable="true" class="editable">${p.name}</td>
+                      <td contenteditable="true" class="editable">${p.price}</td>
+                      <td contenteditable="true" class="editable">${p.stock}</td>
+                      <td>
+                        <button class='btn' onclick="saveProduct('${p.id}',this)">Save</button>
+                        <button class='btn' onclick="deleteProduct('${p.id}',this)">Delete</button>
+                        <span class='inlineMsg'></span>
+                      </td>`;
+      ptbody.appendChild(tr);
+    });
+});
+
+/* MOVEABLE HEADER */
+const topbar=document.getElementById('topbar');
+let isDragging=false,offsetX=0,offsetY=0;
+topbar.addEventListener('mousedown',e=>{isDragging=true;offsetX=e.clientX-topbar.getBoundingClientRect().left;offsetY=e.clientY-topbar.getBoundingClientRect().top;topbar.style.transition='none';});
+document.addEventListener('mousemove',e=>{if(!isDragging) return; let newX=e.clientX-offsetX; let newY=e.clientY-offsetY; if(newX<0)newX=0;if(newY<0)newY=0;if(newX+topbar.offsetWidth>window.innerWidth)newX=window.innerWidth-topbar.offsetWidth;if(newY+topbar.offsetHeight>window.innerHeight)newY=window.innerHeight-topbar.offsetHeight;topbar.style.left=newX+'px';topbar.style.top=newY+'px';});
+document.addEventListener('mouseup',()=>{if(isDragging){isDragging=false;topbar.style.transition='left 0.2s ease, top 0.2s ease';}});
+</script>
+<script src="../js/cookies.js"></script>
+<script>
+// Check admin session from cookies
+if (typeof CookieManager !== 'undefined') {
+  const adminSession = CookieManager.getSession('adminUser');
+  if (!adminSession) {
+    // Check localStorage as fallback
+    const localAdmin = localStorage.getItem('adminUser');
+    if (!localAdmin) {
+      console.log('⚠️ No admin session found, redirecting to login...');
+      window.location.href = 'admin.html';
+    }
+  } else {
+    console.log('✅ Admin session found:', adminSession);
+  }
+}
+</script>
+</body>
+</html>

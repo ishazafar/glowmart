@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Glow Mart - FAQ</title>
+<link rel="icon" type="image/png" href="../../images/logo.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background: linear-gradient(135deg, #fff0f5 0%, #ffeef2 50%, #fff7ea 100%);color:#333;line-height:1.45;}
+header{width:100%;background:linear-gradient(135deg,#ff4d7e,#ff8a00);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;}
+.logo img{width:44px;height:44px;border-radius:8px;border:2px solid #fff;object-fit:cover;}
+nav a{color:#fff;text-decoration:none;margin-left:16px;font-weight:600;}
+nav a:hover{opacity:.95;}
+main h1{text-align:center;padding:48px 16px 20px 16px;font-size:30px;color:#b8005a;}
+.controls{max-width:900px;margin:20px auto;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.controls input[type="text"]{padding:10px 15px;width:100%;max-width:500px;border-radius:8px;border:2px solid #ff1493;outline:none;font-size:1rem;}
+.controls button{padding:10px 20px;background:#ff69b4;color:white;border:none;border-radius:8px;cursor:pointer;transition:background 0.3s;font-size:1rem;}
+.controls button:hover{ background:#ff1493; }
+.faq-container{max-width:900px;margin:auto;padding-bottom:60px;}
+.faq-item{background:#fff;border-radius:12px;margin-bottom:20px;box-shadow:0 6px 15px rgba(0,0,0,0.1);overflow:hidden;transition: transform 0.2s;border:2px solid #ff1493;}
+.faq-item:hover{ transform: translateY(-3px);}
+.question{padding:18px 25px;font-weight:600;cursor:pointer;position:relative;background:#ffe4f1;font-size:1.1rem;transition: background 0.3s, color 0.3s;border-left:5px solid #ff69b4;border-radius:10px;}
+.question:hover{ background:#ffb6c1; color:#fff; }
+.question::after{content:'+';position:absolute;right:25px;font-size:22px;transition: transform 0.3s;}
+.question.active::after{ transform: rotate(45deg); }
+.answer{padding:15px 25px 20px 25px;display:none;background:#fff0f5;border-top:1px solid #ff69b4;font-size:1rem;border-radius:0 0 10px 10px;}
+.answer.show{ display:block; animation: fadeIn 0.3s; }
+@keyframes fadeIn{ from {opacity:0;} to {opacity:1;} }
+@media(max-width:600px){.controls{ flex-direction:column; align-items:stretch; }.question{ font-size:1rem; }.answer{ font-size:0.95rem; }}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="../../images/logo.png" alt="Glow Mart">
+    Glow Mart
+  </div>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../about.html">About</a>
+    <a href="../../contact.html">Contact</a>
+    <a href="faq.html">FAQ</a>
+    <a href="../../user/signup.html">Sign Up</a>
+    <a href="../../user/login.html">Login</a>
+  </nav>
+</header>
+
+<main>
+<h1>Frequently Asked Questions</h1>
+
+<div class="controls">
+    <input type="text" id="searchInput" placeholder="Type to search your question...">
+    <div>
+        <button id="expandAll">Expand All</button>
+        <button id="collapseAll">Collapse All</button>
+    </div>
+</div>
+
+<div class="faq-container">
+  <div class="faq-item">
+      <div class="question">What is Glow Mart?</div>
+      <div class="answer">Glow Mart is an online store where you can buy skincare, perfumes, haircare, and beauty products easily from home.</div>
+  </div>
+  <div class="faq-item">
+      <div class="question">How long does delivery take?</div>
+      <div class="answer">Orders are usually delivered within 3-5 days depending on your location.</div>
+  </div>
+  <div class="faq-item">
+      <div class="question">Do you deliver internationally?</div>
+      <div class="answer">Currently, we only deliver within Pakistan.</div>
+  </div>
+  <div class="faq-item">
+      <div class="question">Which payment methods are available?</div>
+      <div class="answer">We accept Cash on Delivery, Credit/Debit Card, Easypaisa, and JazzCash.</div>
+  </div>
+  <div class="faq-item">
+      <div class="question">How can I cancel my order?</div>
+      <div class="answer">You can cancel your order within 24 hours of placing it by contacting our support team.</div>
+  </div>
+  <div class="faq-item">
+      <div class="question">How do I choose the right products?</div>
+      <div class="answer">Browse the product categories and use filters to select products based on your skin type or preferences.</div>
+  </div>
+  <div class="faq-item">
+      <div class="question">How do I create an account?</div>
+      <div class="answer">Go to the Sign Up page and fill in your email, password, and basic details to create your account.</div>
+  </div>
+</div>
+</main>
+
+<script>
+const questions = document.querySelectorAll('.question');
+const searchInput = document.getElementById('searchInput');
+const expandAllBtn = document.getElementById('expandAll');
+const collapseAllBtn = document.getElementById('collapseAll');
+
+questions.forEach(q => {
+    q.addEventListener('click', () => {
+        q.classList.toggle('active');
+        const answer = q.nextElementSibling;
+        answer.classList.toggle('show');
+    });
+});
+
+searchInput.addEventListener('input', () => {
+    const filter = searchInput.value.toLowerCase();
+    document.querySelectorAll('.faq-item').forEach(item => {
+        const questionText = item.querySelector('.question').textContent.toLowerCase();
+        item.style.display = questionText.includes(filter) ? '' : 'none';
+    });
+});
+
+expandAllBtn.addEventListener('click', () => {
+    questions.forEach(q => { q.classList.add('active'); q.nextElementSibling.classList.add('show'); });
+});
+collapseAllBtn.addEventListener('click', () => {
+    questions.forEach(q => { q.classList.remove('active'); q.nextElementSibling.classList.remove('show'); });
+});
+</script>
+
+</body>
+</html>

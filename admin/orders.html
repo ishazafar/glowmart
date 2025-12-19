@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlowMart Admin - Orders</title>
+<link rel="icon" type="image/png" href="../images/logo.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif}
+:root{
+  --primary:#1e3c72;
+  --accent:#1e3c72;
+  --muted:#f6f6f9;
+  --card:#ffffff;
+  --text:#222;
+  --ghost:#6b7280;
+  --shadow:0 6px 18px rgba(16,24,40,0.06);
+}
+html,body{height:100%;background:linear-gradient(180deg,#fff 0%,#fffafc 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.topbar{
+  position:absolute;
+  top:0; left:0; width:calc(100% - 24px);
+  margin:12px;
+  z-index:100;
+  border-radius:12px;
+  background:var(--primary);
+  display:flex; align-items:center; padding:12px 20px; gap:12px; cursor:move; user-select:none;
+}
+.nav-left{display:flex;align-items:center;gap:12px}
+.nav-left img{height:32px;width:32px;object-fit:cover;border-radius:6px}
+.nav-left h1{font-size:16px;color:#fff;margin-left:6px}
+
+.nav-center{display:flex;gap:8px;align-items:center;margin-left:20px}
+.nav-center a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:8px;font-weight:600;font-size:14px}
+.nav-center a.active{background:rgba(255,255,255,0.2)}
+
+.search-bar{position:relative;display:flex;align-items:center;margin-left:auto}
+#searchInput{
+  padding:6px 36px 6px 10px;
+  border-radius:20px; border:none; outline:none; font-size:14px; transition: width 0.35s ease, padding 0.2s;
+  width:0; background:#fff; color:#333;
+}
+#searchInput.expanded{width:200px;}
+.search-bar .search-icon{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:16px; cursor:pointer; color:#333; pointer-events:auto;}
+
+/* LAYOUT */
+.layout{display:flex;gap:20px;padding:18px;margin-top:56px}
+.sidebar{width:240px;min-height:calc(100vh - 76px);overflow:auto}
+.sidebar .menu{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);height:100%;overflow:auto}
+.menu a{display:flex;gap:10px;align-items:center;padding:10px;border-radius:8px;color:var(--ghost);text-decoration:none;margin-bottom:6px}
+.menu a.active{background:linear-gradient(90deg,var(--accent),#1e3c72);color:#fff}
+
+.content{flex:1;overflow:auto}
+.panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #f1f1f6}
+th{font-size:13px;color:var(--ghost)}
+button.btn{background:var(--primary);color:#fff;padding:6px 8px;border:0;border-radius:6px;cursor:pointer}
+.inlineMsg{margin-left:8px;color:var(--primary)}
+.sidebar::-webkit-scrollbar,.content::-webkit-scrollbar{height:8px;width:8px}
+.sidebar::-webkit-scrollbar-thumb,.content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:8px}
+</style>
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="nav-left">
+    <img id="siteLogo" src="../images/logo.png" alt="GlowMart logo">
+    <h1>GlowMart Admin</h1>
+    <nav class="nav-center">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="products.html">Products</a>
+      <a href="orders.html" class="active">Orders</a>
+      <a href="customers.html">Customers</a>
+    </nav>
+  </div>
+  <div class="search-bar">
+    <input id="searchInput" placeholder="Search orders..." />
+    <span class="search-icon">&#128269;</span>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="menu">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="products.html">Products</a>
+      <a href="orders.html" class="active">Orders</a>
+      <a href="customers.html">Customers</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="panel">
+      <h2>Orders List</h2>
+      <table>
+        <thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="ordersTable"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { db, collection, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from '../../firebase/firebase.js';
+
+let ordersState = [];
+
+// Fetch orders from Firebase
+async function fetchOrders() {
+  try {
+    console.log('📦 Fetching orders from Firebase...');
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    
+    ordersState = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      ordersState.push({
+        id: data.orderId || docSnap.id,
+        docId: docSnap.id, // Firestore document ID
+        customer: data.customerName || data.customerEmail || 'Guest',
+        email: data.customerEmail || '',
+        amount: data.totalAmount || 0,
+        status: data.status || 'pending',
+        items: data.items || [],
+        createdAt: data.createdAt,
+        sessionId: data.sessionId
+      });
+    });
+    
+    console.log(`✅ Loaded ${ordersState.length} orders from Firebase`);
+    renderOrders();
+  } catch (error) {
+    console.error('❌ Error fetching orders:', error);
+    renderOrders();
+  }
+}
+
+function renderOrders() {
+  const tbody = document.getElementById('ordersTable');
+  tbody.innerHTML = '';
+  
+  if (ordersState.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999;">No orders found</td></tr>';
+    return;
+  }
+  
+  ordersState.forEach(o => {
+    const tr = document.createElement('tr');
+    const statusColors = {
+      'pending': '#ffc107',
+      'processing': '#17a2b8',
+      'shipped': '#007bff',
+      'delivered': '#28a745',
+      'cancelled': '#dc3545'
+    };
+    const statusColor = statusColors[o.status] || '#6c757d';
+    
+    tr.innerHTML = `
+      <td><strong>${o.id}</strong><br><small style="color:#999;">${new Date(o.createdAt).toLocaleDateString()}</small></td>
+      <td>${o.customer}<br><small style="color:#999;">${o.email || ''}</small></td>
+      <td>PKR ${Math.round(o.amount).toLocaleString()}<br><small style="color:#999;">${o.items.length} item(s)</small></td>
+      <td>
+        <select class="status-select" data-order-id="${o.docId}" style="padding:4px 8px;border-radius:4px;border:1px solid #ddd;">
+          <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
+          <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
+          <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+          <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+          <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+        </select>
+      </td>
+      <td>
+        <button class='btn' onclick="viewOrderDetails('${o.id}')" style="margin-right:4px;">View</button>
+        <button class='btn' onclick="deleteOrder('${o.docId}', this)" style="background:#dc3545;">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  // Add event listeners for status changes
+  document.querySelectorAll('.status-select').forEach(select => {
+    select.addEventListener('change', async function() {
+      await updateOrderStatus(this.dataset.orderId, this.value);
+    });
+  });
+}
+
+async function updateOrderStatus(docId, newStatus) {
+  try {
+    console.log(`📝 Updating order ${docId} status to ${newStatus}`);
+    const orderRef = doc(db, 'orders', docId);
+    await updateDoc(orderRef, {
+      status: newStatus,
+      updatedAt: new Date().toISOString()
+    });
+    console.log('✅ Order status updated');
+    
+    // Update local state
+    const order = ordersState.find(o => o.docId === docId);
+    if (order) {
+      order.status = newStatus;
+    }
+    
+    // alert('Order status updated successfully!');
+    renderOrders();
+  } catch (error) {
+    console.error('❌ Error updating order status:', error);
+    // alert('Failed to update order status: ' + error.message);
+  }
+}
+
+window.viewOrderDetails = function(orderId) {
+  const order = ordersState.find(o => o.id === orderId);
+  if (!order) {
+    // alert('Order not found');
+    return;
+  }
+  
+  const itemsList = order.items.map(item => 
+    `  • ${item.name} x${item.quantity} - PKR ${item.total.toLocaleString()}`
+  ).join('\n');
+  
+  // alert(`Order Details\n\n` +
+    `Order ID: ${order.id}\n` +
+    `Customer: ${order.customer}\n` +
+    `Email: ${order.email || 'N/A'}\n` +
+    `Status: ${order.status}\n` +
+    `Total: PKR ${Math.round(order.amount).toLocaleString()}\n` +
+    `Date: ${new Date(order.createdAt).toLocaleString()}\n\n` +
+    `Items:\n${itemsList}`
+  );
+};
+
+window.deleteOrder = async function(docId, btn) {
+  if (!confirm('Are you sure you want to delete this order?')) {
+    return;
+  }
+  
+  try {
+    console.log(`🗑️ Deleting order ${docId}`);
+    await deleteDoc(doc(db, 'orders', docId));
+    console.log('✅ Order deleted');
+    
+    // Remove from local state
+    ordersState = ordersState.filter(o => o.docId !== docId);
+    renderOrders();
+    
+    // alert('Order deleted successfully!');
+  } catch (error) {
+    console.error('❌ Error deleting order:', error);
+    // alert('Failed to delete order: ' + error.message);
+  }
+};
+
+/* SEARCH */
+const searchInput = document.getElementById('searchInput');
+const searchIcon = document.querySelector('.search-icon');
+searchIcon.addEventListener('click', () => searchInput.classList.toggle('expanded'));
+searchInput.addEventListener('input', function(e) {
+  const q = e.target.value.trim().toLowerCase();
+  const tbody = document.getElementById('ordersTable');
+  tbody.innerHTML = '';
+  
+  if (q.length === 0) {
+    renderOrders();
+    return;
+  }
+  
+  const filtered = ordersState.filter(o => 
+    o.id.toLowerCase().includes(q) || 
+    o.customer.toLowerCase().includes(q) ||
+    (o.email && o.email.toLowerCase().includes(q))
+  );
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999;">No orders found</td></tr>';
+    return;
+  }
+  
+  filtered.forEach(o => {
+    const tr = document.createElement('tr');
+    const statusColors = {
+      'pending': '#ffc107',
+      'processing': '#17a2b8',
+      'shipped': '#007bff',
+      'delivered': '#28a745',
+      'cancelled': '#dc3545'
+    };
+    const statusColor = statusColors[o.status] || '#6c757d';
+    
+    tr.innerHTML = `
+      <td><strong>${o.id}</strong><br><small style="color:#999;">${new Date(o.createdAt).toLocaleDateString()}</small></td>
+      <td>${o.customer}<br><small style="color:#999;">${o.email || ''}</small></td>
+      <td>PKR ${Math.round(o.amount).toLocaleString()}<br><small style="color:#999;">${o.items.length} item(s)</small></td>
+      <td>
+        <select class="status-select" data-order-id="${o.docId}" style="padding:4px 8px;border-radius:4px;border:1px solid #ddd;">
+          <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
+          <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
+          <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+          <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+          <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+        </select>
+      </td>
+      <td>
+        <button class='btn' onclick="viewOrderDetails('${o.id}')" style="margin-right:4px;">View</button>
+        <button class='btn' onclick="deleteOrder('${o.docId}', this)" style="background:#dc3545;">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  // Re-attach event listeners
+  document.querySelectorAll('.status-select').forEach(select => {
+    select.addEventListener('change', async function() {
+      await updateOrderStatus(this.dataset.orderId, this.value);
+    });
+  });
+});
+
+/* MOVEABLE HEADER */
+const topbar = document.getElementById('topbar');
+let isDragging = false, offsetX = 0, offsetY = 0;
+topbar.addEventListener('mousedown', e => {
+  isDragging = true;
+  offsetX = e.clientX - topbar.getBoundingClientRect().left;
+  offsetY = e.clientY - topbar.getBoundingClientRect().top;
+  topbar.style.transition = 'none';
+});
+document.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  let newX = e.clientX - offsetX;
+  let newY = e.clientY - offsetY;
+  if (newX < 0) newX = 0;
+  if (newY < 0) newY = 0;
+  if (newX + topbar.offsetWidth > window.innerWidth) newX = window.innerWidth - topbar.offsetWidth;
+  if (newY + topbar.offsetHeight > window.innerHeight) newY = window.innerHeight - topbar.offsetHeight;
+  topbar.style.left = newX + 'px';
+  topbar.style.top = newY + 'px';
+});
+document.addEventListener('mouseup', () => {
+  if (isDragging) {
+    isDragging = false;
+    topbar.style.transition = 'left 0.2s ease, top 0.2s ease';
+  }
+});
+
+// Initialize on page load
+window.addEventListener('DOMContentLoaded', () => {
+  fetchOrders();
+});
+</script>
+</body>
+</html>

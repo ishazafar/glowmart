@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glow Mart ✨</title>
+<link rel="icon" type="image/png" href="./images/logo.png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins',sans-serif; }
+  body { background: #fff; color: #333; }
+
+  /* MAIN WRAPPER (new added) */
+  .main-wrapper {
+    width: 100%;
+    max-width: 1400px; /* safe responsive width */
+    margin: auto;
+    padding: 0;
+  }
+
+  /* ==== HEADER ==== */
+  header {
+    background: linear-gradient(135deg, #ff4d7e, #ff8a00);
+    color: white;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 700; }
+  .logo img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; }
+
+  nav { display: flex; align-items: center; gap: 25px; }
+  nav a { color: white; text-decoration: none; font-weight: 500; }
+  nav a:hover { opacity: 0.8; }
+
+  /* NAV SEARCH BAR */
+.nav-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  transition: width 0.3s ease;
+  width: 35px; /* initial icon width */
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.nav-search input {
+  border: none;
+  outline: none;
+  padding: 6px 8px;
+  width: 0;
+  opacity: 0;
+  transition: width 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-search.active {
+  width: 180px; /* expanded width */
+}
+
+.nav-search.active input {
+  width: 140px;
+  opacity: 1;
+}
+
+.nav-search button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 2px;
+}
+  /* cart subtle background to give light color effect */
+  #cartButton {
+    background: rgba(255,77,126,0.10);
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,77,126,0.16);
+    transition: background .18s ease, transform .12s ease;
+  }
+  #cartButton:hover {
+    background: rgba(255,77,126,0.16);
+    transform: translateY(-2px);
+  }
+
+  /* ==== DROPDOWN MENU ==== */
+  .dropdown { position: relative; display: inline-block; }
+  .dropbtn { color: white; text-decoration: none; font-weight: 500; cursor: pointer; }
+  .dropdown-content {
+    display: none; position: absolute; background-color: #fff; min-width: 170px;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 1; border-radius: 8px;
+  }
+  .dropdown-content a { color: #333; padding: 10px 15px; text-decoration: none; display: block; }
+  .dropdown-content a:hover { background-color: #ffe4ec; color: #ff4d7e; }
+  .dropdown:hover .dropdown-content { display: block; }
+
+  /* Hamburger Icon */
+  .menu-icon { display: none; flex-direction: column; cursor: pointer; }
+  .menu-icon div { width: 28px; height: 3px; background: white; margin: 4px 0; border-radius: 3px; }
+
+  /* Sidebar Drawer */
+  .side-drawer {
+    position: fixed; top: 0; left: -250px; width: 230px; height: 100%;
+    background: #fff3f7; box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+    padding: 25px; transition: left 0.4s ease; z-index: 2000;
+  }
+  .side-drawer.open { left: 0; }
+  .side-drawer h3 { color: #ff4d7e; text-align: center; margin-bottom: 20px; }
+  .side-drawer a {
+    display: block; color: #444; text-decoration: none; padding: 10px 0; text-align: center;
+    border-bottom: 1px solid #ffe1e8; transition: 0.3s;
+  }
+  .side-drawer a:hover { color: #ff4d7e; font-weight: bold; }
+
+  /* ==== LAYOUT ==== */
+  .layout { display: flex; justify-content: space-between; }
+  aside.left-menu {
+    width: 200px; background: #fff3f7; padding: 25px; border-right: 2px solid #ffd4e2;
+  }
+  .left-menu h3 { color: #ff4d7e; margin-bottom: 15px; text-align: center; }
+  .left-menu a { display: block; color: #444; text-decoration: none; padding: 10px 0;
+    transition: 0.3s; text-align: center; }
+  .left-menu a:hover { color: #ff4d7e; font-weight: 600; }
+
+  main {
+    flex: 1; padding: 40px 30px; background: linear-gradient(135deg, #fff0f5, #ffe4b5);
+    display: flex; justify-content: center; align-items: center; min-height: 100vh;
+  }
+
+  .hero {
+    text-align: center; padding: 60px 30px; background: rgba(255, 255, 255, 0.85);
+    border-radius: 20px; box-shadow: 0px 5px 15px rgba(255, 138, 0, 0.15);
+    width: 80%;
+    opacity: 0; transform: translateY(30px);
+    animation: heroFadeIn 1s forwards;
+  }
+
+  .hero h1 { font-size: 45px; color: #ff4d7e; margin-bottom: 15px; }
+  .hero p { font-size: 18px; margin-bottom: 25px; color: #555; }
+  .hero button {
+    background: #ff4d7e; color: white; border: none;
+    padding: 14px 30px; border-radius: 30px; font-size: 17px;
+    cursor: pointer; transition: background 0.3s ease;
+  }
+  .hero button:hover { background: #e04470; }
+
+  /* ==== ADVERTISEMENT ==== */
+  .advertisement {
+    width: 220px; background: #fff9f3; border-left: 2px solid #ffe1c4;
+    padding: 20px; text-align: center; height: 100%;
+    overflow: hidden;
+  }
+  .advertisement h3 { color: #ff8a00; margin-bottom: 15px; font-size: 18px; }
+  .ad-container { display: flex; flex-direction: column; gap: 15px; }
+  .ad-container img {
+    width: 100%; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    opacity: 0; transform: translateY(20px);
+    animation: adFadeIn 0.8s forwards;
+  }
+  .ad-container img:hover { transform: scale(1.05); }
+
+  /* ==== BEST SELLERS SECTION (NEW) ==== */
+  .best-sellers {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px 30px;
+  }
+  .best-sellers h2 {
+    color: #ff4d7e;
+    font-size: 32px;
+    margin-bottom: 12px;
+    font-weight: 900; /* made bolder as requested */
+    text-align: center; /* centered heading */
+    letter-spacing: 0.3px;
+  }
+  .seller-row {
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  .seller-card {
+    flex: 0 0 260px;
+    background: #ffebec; /* light baby pink color */
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+    position: relative;
+    transition: all 0.4s ease-in-out;
+}
+
+  .seller-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 18px 36px rgba(0,0,0,0.12); }
+  .seller-img { width:100%; height:180px; overflow:hidden; background: linear-gradient(180deg, rgba(255,77,126,0.03), rgba(255,138,0,0.02)); }
+  /* seller images now use same fade-in animation as ads */
+  .seller-img img {
+    width:100%; height:100%; object-fit:cover; display:block;
+    transition: transform .45s ease;
+    transform-origin:center center;
+    opacity: 0;
+    transform: translateY(20px) scale(1);
+    animation: adFadeIn 0.8s forwards; /* same animation duration as ads */
+  }
+  .seller-card:hover .seller-img img { transform: scale(1.14); } /* zoom effect on hover */
+  .seller-body { padding:12px; text-align:center; }
+  .seller-title { font-weight:700; color:#333; font-size:15px; margin-bottom:8px; min-height:44px; }
+  .seller-price { color:#ff4d7e; font-weight:800; font-size:16px; margin-bottom:10px; }
+  .seller-actions { display:flex; justify-content:center; gap:8px; align-items:center; }
+
+  .btn-add {
+    background: #ff4d7e; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700;
+  }
+  .btn-add:active { transform: scale(.98); }
+
+  /* Footer & Back-to-top */
+  footer {
+    background: #222; color: #ddd; text-align: center;
+    padding: 25px 10px; font-size: 14px;
+  }
+  footer a { color: #ff8a00; text-decoration: none; }
+
+  #scrollTopBtn {
+    display: none;
+    position: fixed; bottom: 40px; right: 40px; z-index: 9999;
+    font-size: 24px; border: none; outline: none; background-color: #ff4d7e;
+    color: white; cursor: pointer; padding: 12px 18px; border-radius: 50%;
+    transition: 0.3s;
+  }
+  #scrollTopBtn:hover { background-color: #e04470; }
+
+  /* ==== ANIMATIONS ==== */
+  @keyframes heroFadeIn { to { opacity:1; transform: translateY(0); } }
+  @keyframes adFadeIn { to { opacity:1; transform: translateY(0) scale(1); } }
+
+  @media(max-width: 900px){
+    .layout { flex-direction: column; }
+    aside.left-menu, .advertisement { display: none; }
+    .menu-icon { display: flex; }
+    nav { display: none; }
+    .seller-card { flex: 0 0 70%; } /* mobile view */
+  }
+
+  /* small scrollbar style */
+  .seller-row::-webkit-scrollbar{ height:8px; }
+  .seller-row::-webkit-scrollbar-thumb{ background: rgba(0,0,0,0.08); border-radius:8px; }
+
+</style>
+</head>
+<body>
+
+<div class="main-wrapper"><!-- WRAPPER START -->
+
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <img src="./images/logo.png" alt="Logo">
+    ✨ Glow Mart
+  </div>
+
+  <!-- Navigation -->
+  <nav>
+    <a href="index.html">Home</a>
+    <div class="dropdown">
+      <a class="dropbtn">Products ▼</a>
+      <div class="dropdown-content">
+        <a href="skincare.html">Skin Care</a>
+        <a href="makeup.html">Makeup</a>
+        <a href="haircare.html">Hair Care</a>
+        <a href="perfumes.html">Perfumes</a>
+      </div>
+    </div>
+    <a href="about.html">About</a>
+    <a href="user/login.html">Login</a>
+    <a href="user/signup.html">Sign Up</a>
+   <!-- 3. Search Bar -->
+    <div class="nav-search">
+      <input type="text" id="navSearchInput" placeholder="Search...">
+      <button id="navSearchBtn">🔍</button>
+    </div> 
+
+    <button id="cartButton" style="background:none; border:none; cursor:pointer; font-size:22px; color:white; position:relative;">
+      🛒
+      <span id="cartCountBadge" style="position:absolute; top:-6px; right:-10px; background:red; color:white; font-size:12px; padding:2px 6px; border-radius:50%; display:none;">0</span>
+    </button>
+  </nav>
+
+  <div class="menu-icon" id="menuToggle">
+    <div></div><div></div><div></div>
+  </div>
+</header>
+
+<!-- SIDE DRAWER MENU -->
+<div class="side-drawer" id="sideDrawer">
+  <h3>Menu</h3>
+  <a href="sidebar/new-arrivals.html">New Arrivals</a>
+  <a href="sidebar/best-sellers.html">Best Sellers</a>
+  <a href="sidebar/offers.html">Offers</a>
+  <a href="contact.html">Contact</a>
+  <a href="sidebar/faq.html">FAQ</a>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+  <aside class="left-menu">
+    <h3>Quick Links</h3>
+    <a href="sidebar/new-arrivals.html">New Arrivals</a>
+    <a href="sidebar/best-sellers.html">Best Sellers</a>
+    <a href="sidebar/offers.html">Offers</a>
+    <a href="sidebar/faq.html">FAQ</a>
+    <a href="contact.html">Contact</a>
+  </aside>
+
+  <main>
+    <section class="hero">
+      <h1>Welcome to Glow Mart 🌸</h1>
+      <p>Your one-stop shop for premium beauty & skincare products.</p>
+      <button onclick="window.location.href='products.html'">Shop Now</button>
+    </section>
+  </main>
+
+  <aside class="advertisement">
+    <h3>Sponsored</h3>
+    <div class="ad-container" id="adContainer">
+      <img src="images/perfume.jpeg" alt="Ad 1" style="animation-delay:0.2s;">
+      <img src="images/Anti Ageng Serum.jpeg" alt="Ad 2" style="animation-delay:0.5s;">
+      <img src="images/Makeup deal.jpeg" alt="Ad 3" style="animation-delay:0.8s;">
+    </div>
+  </aside>
+</div>
+<!-- FILTER & SORT BAR -->
+<div class="filter-sort-bar" style="max-width:1200px; margin:20px auto; display:flex; justify-content:space-between; gap:10px;">
+  <select id="filterCategory">
+    <option value="all">All Categories</option>
+    <option value="offersRow">Offers</option>
+    <option value="newArrivalsRow">New Arrivals</option>
+    <option value="sellerRow">Best Sellers</option>
+  </select>
+
+  <select id="sortOption">
+    <option value="default">Sort By</option>
+    <option value="low">Price: Low to High</option>
+    <option value="high">Price: High to Low</option>
+    <option value="az">Alphabetical (A–Z)</option>
+  </select>
+</div>
+
+<!-- ===== OFFERS (Horizontal slider like Best Resellers) ===== -->
+<section class="best-sellers" aria-label="Offers">
+  <h2 class="br-heading">🔥 OFFERS</h2>
+  <div class="seller-row" id="offersRow">
+    <p style="text-align:center; padding:20px;">Loading offers...</p>
+  </div>
+</section>
+<!-- ===== NEW ARRIVALS (Horizontal slider like Best Resellers) ===== -->
+<section class="best-sellers" aria-label="New Arrivals">
+  <h2 class="br-heading">✨ NEW ARRIVALS</h2>
+  <div class="seller-row" id="newArrivalsRow">
+    <p style="text-align:center; padding:20px;">Loading new arrivals...</p>
+  </div>
+</section>
+
+
+<!-- NEW SECTION: Best Sellers (horizontal row beneath existing layout) -->
+<section class="best-sellers" aria-label="Best Sellers">
+  <h2 class="br-heading">⭐ BEST SELLERS</h2>
+  <div class="br-slider-wrapper"></div>
+  <div class="seller-row" id="sellerRow">
+    <p style="text-align:center; padding:20px;">Loading best sellers...</p>
+</div>
+</section>
+
+<!-- ===== small JS to enable auto-scroll & pause on hover for new rows (uses same logic as sellerRow) ===== -->
+<script>
+  // Reusable auto-scroll initializer for any row id
+  function initHorizontalAutoScroll(rowId, gap = 18, interval = 3000) {
+    const row = document.getElementById(rowId);
+    if(!row) return;
+    let timer = null;
+    function cardStep() {
+      const firstCard = row.querySelector('.seller-card');
+      if(!firstCard) return 0;
+      return firstCard.getBoundingClientRect().width + gap;
+    }
+    function start() {
+      if(timer) clearInterval(timer);
+      timer = setInterval(()=> {
+        const step = cardStep();
+        if(!step) return;
+        if (row.scrollLeft + row.clientWidth >= row.scrollWidth - 5) {
+          row.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          row.scrollBy({ left: step, behavior: 'smooth' });
+        }
+      }, interval);
+    }
+    row.addEventListener('mouseenter', ()=>{ if(timer) clearInterval(timer); });
+    row.addEventListener('mouseleave', ()=>{ start(); });
+    // enable scroll-snap align center for children
+    row.style.scrollSnapType = 'x mandatory';
+    Array.from(row.children).forEach(ch => { ch.style.scrollSnapAlign = 'center'; });
+    start();
+    // recalc on resize
+    window.addEventListener('resize', ()=>{ /* no-op but ensures recalc */ });
+  }
+
+  // initialize both rows
+  initHorizontalAutoScroll('newArrivalsRow');
+  initHorizontalAutoScroll('offersRow');
+</script>
+<!-- ===== END New Arrivals & Offers snippet ===== -->
+<script src="js/cookies.js"></script>
+<script type="module" src="products.js"></script>
+<script type="module">
+// Load products from Firebase and render on index page
+import { db, collection, getDocs } from './firebase/firebase.js';
+
+let allProducts = [];
+
+// Fetch products from Firebase
+async function fetchProducts() {
+  try {
+    const productsRef = collection(db, 'products');
+    const snapshot = await getDocs(productsRef);
+    
+    allProducts = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      allProducts.push({
+        id: doc.id,
+        name: data.name,
+        price: data.price,
+        image: data.image,
+        category: data.category
+      });
+    });
+    
+    console.log(`✅ Loaded ${allProducts.length} products from Firebase`);
+    renderProductSections();
+  } catch (error) {
+    console.error('❌ Error fetching products:', error);
+  }
+}
+
+// Render product card HTML
+function createProductCard(product, badge = '') {
+  const badgeHtml = badge ? `<div class="badge-offer">${badge}</div>` : '';
+  return `
+    <div class="seller-card" data-id="${product.id}" data-title="${product.name}" data-price="${product.price}" data-img="${product.image}">
+      ${badgeHtml}
+      <div class="seller-img"><img src="${product.image}" alt="${product.name}"></div>
+      <div class="seller-body">
+        <div class="seller-title">${product.name}</div>
+        <div class="seller-price">PKR ${product.price.toLocaleString()}</div>
+        <div class="seller-actions">
+          <button class="btn-add" onclick="addToCart('${product.id}','${product.name}',${product.price},'${product.image}')">Add to cart</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Render all product sections
+function renderProductSections() {
+  // Render Best Sellers (based on localStorage productCounts)
+  const sellerRow = document.getElementById('sellerRow');
+  if (sellerRow) {
+    const counts = JSON.parse(localStorage.getItem('productCounts')) || {};
+    const sorted = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10) // Top 10
+      .map(item => item[0]);
+    
+    const bestSellers = sorted
+      .map(id => allProducts.find(p => p.id === id))
+      .filter(p => p);
+    
+    // If no best sellers, show some random products
+    const productsToShow = bestSellers.length > 0 ? bestSellers : allProducts.slice(0, 5);
+    
+    sellerRow.innerHTML = productsToShow.map(p => createProductCard(p)).join('');
+  }
+  
+  // Render Offers (show some products from different categories)
+  const offersRow = document.getElementById('offersRow');
+  if (offersRow) {
+    const offers = allProducts
+      .filter(p => p.category === 'skincare' || p.category === 'makeup')
+      .slice(0, 6);
+    offersRow.innerHTML = offers.map(p => createProductCard(p, 'Offer')).join('');
+  }
+  
+  // Render New Arrivals (show recent products or mix of categories)
+  const newArrivalsRow = document.getElementById('newArrivalsRow');
+  if (newArrivalsRow) {
+    const newArrivals = allProducts
+      .filter(p => p.category === 'perfumes' || p.category === 'makeup')
+      .slice(0, 7);
+    newArrivalsRow.innerHTML = newArrivals.map(p => createProductCard(p)).join('');
+  }
+  
+  // Re-initialize auto-scroll for all rows
+  setTimeout(() => {
+    if (typeof initHorizontalAutoScroll === 'function') {
+      initHorizontalAutoScroll('offersRow');
+      initHorizontalAutoScroll('newArrivalsRow');
+      initHorizontalAutoScroll('sellerRow');
+    }
+  }, 100);
+}
+
+// Wait for products.js to load, then fetch from Firebase
+window.addEventListener('DOMContentLoaded', () => {
+  // Wait a bit for products.js to potentially load products
+  setTimeout(() => {
+    // If products.js already loaded products, use them; otherwise fetch
+    if (typeof window.products !== 'undefined' && window.products.length > 0) {
+      allProducts = window.products;
+      renderProductSections();
+    } else {
+      fetchProducts();
+    }
+  }, 500);
+});
+</script>
+
+<footer style="background-color: #222; color: #fff; text-align: center; padding: 20px 0;">
+  <p style="margin-bottom: 10px;">Follow us on</p>
+  <div style="display: flex; justify-content: center; gap: 20px; align-items: center;">
+    <!-- Instagram -->
+    <a href="https://www.instagram.com/es_ha2867" target="_blank" style="color: #fff; font-size: 28px; transition: transform 0.3s, color 0.3s;">
+      <i class="fa-brands fa-instagram"></i>
+    </a>
+    <!-- YouTube -->
+    <a href="https://youtube.com/@ghulamahmad9344" target="_blank" style="color: #fff; font-size: 28px; transition: transform 0.3s, color 0.3s;">
+      <i class="fa-brands fa-youtube"></i>
+    </a>
+    <!-- Facebook -->
+    <a href="https://www.facebook.com/share/1DMiDmiyjJ/" target="_blank" style="color: #fff; font-size: 28px; transition: transform 0.3s, color 0.3s;">
+      <i class="fa-brands fa-facebook-f"></i>
+    </a>
+  </div>
+
+  <p style="margin-top:10px;">© 2025 Glow Mart | All Rights Reserved | <a href="#" style="color:#ff8a00;">Privacy Policy</a></p>
+</footer>
+
+<!-- Font Awesome CDN for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Hover effect -->
+<style>
+  footer a:hover {
+    transform: scale(1.2);
+    color: #ffcc00;
+  }
+</style>
+
+
+<button id="scrollTopBtn" title="Go to top">↑</button>
+
+</div><!-- WRAPPER END -->
+
+
+<script>
+  // Drawer Toggle
+  const menuToggle = document.getElementById('menuToggle');
+  const sideDrawer = document.getElementById('sideDrawer');
+  menuToggle.addEventListener('click', () => {
+    sideDrawer.classList.toggle('open');
+  });
+
+  // Vertical Rotating Ads
+  const container = document.getElementById('adContainer');
+  setInterval(() => {
+    const firstAd = container.firstElementChild;
+    container.appendChild(firstAd);
+  }, 3000);
+
+  // Cart Functionality (existing)
+  let cart = JSON.parse(localStorage.getItem('cart')) || [];
+  function updateCartBadge() {
+    const badge = document.getElementById('cartCountBadge');
+    const totalItems = cart.reduce((sum, item) => sum + (item.qty || 0), 0);
+    badge.style.display = totalItems > 0 ? 'inline-block' : 'none';
+    badge.textContent = totalItems;
+  }
+  updateCartBadge();
+  document.getElementById('cartButton').addEventListener('click', () => {
+    window.location.href = 'cart.html';
+  });
+
+  // addToCart used by Best Sellers cards (keeps existing cart var)
+  function addToCart(id, title, price, img){
+    const idx = cart.findIndex(i => i.id === id);
+    if(idx > -1){
+      cart[idx].qty = (cart[idx].qty || 0) + 1;
+    } else {
+      cart.push({ id, title, price, img, qty: 1 });
+    }
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartBadge();
+    
+    // small feedback on button
+    try{
+      const btn = event.target;
+      const old = btn.innerText;
+      btn.innerText = 'Added ✓';
+      btn.disabled = true;
+      setTimeout(()=>{ btn.innerText = old; btn.disabled = false; }, 800);
+    }catch(e){}
+  }
+
+  // Back to Top Button
+  const scrollBtn = document.getElementById("scrollTopBtn");
+  window.onscroll = function() {
+    scrollBtn.style.display = (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) ? "block" : "none";
+  };
+  scrollBtn.addEventListener("click", function() {
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  // Auto-scroll for seller-row: move every 3 seconds and loop back when reaching end
+  (function(){
+    const row = document.getElementById('sellerRow');
+    if(!row) return;
+
+    let cardGap = 18; // same as CSS gap
+    let autoInterval = 3000;
+    let timer = null;
+
+    function cardStep(){
+      const firstCard = row.querySelector('.seller-card');
+      if(!firstCard) return 0;
+      // compute visible step as card width + gap
+      return firstCard.getBoundingClientRect().width + cardGap;
+    }
+
+    function startAutoScroll(){
+      if(timer) clearInterval(timer);
+      timer = setInterval(()=>{
+        const step = cardStep();
+        // if near end, smooth scroll back to start
+        if (row.scrollLeft + row.clientWidth >= row.scrollWidth - 5) {
+          // small pause then jump back smoothly to start
+          row.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          row.scrollBy({ left: step, behavior: 'smooth' });
+        }
+      }, autoInterval);
+    }
+
+    // pause on mouseenter & resume on mouseleave (nice UX)
+    row.addEventListener('mouseenter', ()=>{ if(timer) clearInterval(timer); });
+    row.addEventListener('mouseleave', ()=>{ startAutoScroll(); });
+
+    // start after DOM ready
+    startAutoScroll();
+
+    // recalc on resize
+    window.addEventListener('resize', ()=>{ /* no-op except ensuring cardStep reads new width */ });
+  })();
+
+  // Optional: make horizontal scroller snap nicely (touch friendly)
+  (function(){
+    const row = document.getElementById('sellerRow');
+    if(row){
+      row.style.scrollSnapType = 'x mandatory';
+      Array.from(row.children).forEach(ch => { ch.style.scrollSnapAlign = 'center'; });
+    }
+  })();
+  const navSearch = document.querySelector('.nav-search');
+  const navInput = document.getElementById('navSearchInput');
+  const navBtn = document.getElementById('navSearchBtn');
+
+  navBtn.addEventListener('click', () => {
+    navSearch.classList.toggle('active');
+    if(navSearch.classList.contains('active')){
+      navInput.focus();
+    }
+  });
+  // SEARCH FILTER FUNCTION
+const searchInput = document.getElementById('navSearchInput');
+const productRows = document.querySelectorAll('.seller-row');
+
+searchInput.addEventListener('input', () => {
+  const query = searchInput.value.toLowerCase();
+
+  productRows.forEach(row => {
+    const cards = row.querySelectorAll('.seller-card');
+    cards.forEach(card => {
+      const title = card.dataset.title.toLowerCase();
+      if(title.includes(query)){
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+});
+// FILTERING
+document.getElementById('filterCategory').addEventListener('change', function(){
+  const selected = this.value;
+  ['offersRow','newArrivalsRow','sellerRow'].forEach(id=>{
+    const section = document.getElementById(id);
+    if(section){
+      section.parentElement.style.display = (selected==='all' || id===selected) ? 'block' : 'none';
+    }
+  });
+});
+
+// SORTING
+document.getElementById('sortOption').addEventListener('change', function(){
+  const sortType = this.value;
+  ['offersRow','newArrivalsRow','sellerRow'].forEach(id=>{
+    const row = document.getElementById(id);
+    if(!row) return;
+    let cards = Array.from(row.querySelectorAll('.seller-card'));
+    if(sortType==='low'){
+      cards.sort((a,b)=>parseInt(a.dataset.price)-parseInt(b.dataset.price));
+    }else if(sortType==='high'){
+      cards.sort((a,b)=>parseInt(b.dataset.price)-parseInt(a.dataset.price));
+    }else if(sortType==='az'){
+      cards.sort((a,b)=>a.dataset.title.localeCompare(b.dataset.title));
+    }
+    cards.forEach(c=>row.appendChild(c));
+  });
+});
+
+</script>
+
+
+</script>
+</body>
+</html>
