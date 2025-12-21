@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Glow Mart - Sign Up</title>
+
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, #ff4d7e, #ff8a00);
+      }
+      .container {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+      input {
+        width: 90%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+      }
+      .input-wrapper {
+        position: relative;
+      }
+      .eye-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #333;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        background: #ff4d7e;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 10px;
+      }
+      button:hover {
+        background: #e04470;
+      }
+      .error {
+        color: red;
+        font-size: 13px;
+        text-align: left;
+        margin-left: 5%;
+        margin-top: -8px;
+        margin-bottom: 5px;
+      }
+      .success {
+        color: green;
+        font-size: 14px;
+        margin-top: 8px;
+      }
+      p {
+        font-size: 14px;
+        margin-top: 15px;
+      }
+      a {
+        color: #ff4d7e;
+        text-decoration: none;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div style="display: flex; justify-content: center; margin-bottom: 20px">
+        <div
+          style="
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+          "
+        >
+          <img
+            src="../images/logo.png"
+            alt="Glow Mart Logo"
+            style="width: 100%; height: 100%; object-fit: cover"
+          />
+        </div>
+      </div>
+
+      <h2>Create Your Account ✨</h2>
+
+      <input
+        type="text"
+        id="name"
+        placeholder="Full Name"
+        autocomplete="off"
+        maxlength="100"
+        required
+      />
+      <div id="nameError" class="error"></div>
+
+      <input
+        type="text"
+        id="username"
+        placeholder="Username"
+        autocomplete="off"
+        maxlength="50"
+        required
+      />
+      <div id="usernameError" class="error"></div>
+
+      <input
+        type="email"
+        id="email"
+        placeholder="Email"
+        autocomplete="off"
+        spellcheck="false"
+        autocapitalize="none"
+        required
+      />
+      <div id="emailError" class="error"></div>
+
+      <div class="input-wrapper">
+        <input
+          type="password"
+          id="password"
+          placeholder="Password (min 6 chars)"
+          required
+        />
+        <span class="eye-icon" id="togglePassword">&#128065;</span>
+      </div>
+      <div id="passwordError" class="error"></div>
+
+      <div class="input-wrapper">
+        <input
+          type="password"
+          id="confirmPassword"
+          placeholder="Confirm Password"
+          required
+        />
+        <span class="eye-icon" id="toggleConfirmPassword">&#128065;</span>
+      </div>
+      <div id="confirmError" class="error"></div>
+
+      <button id="signupBtn" type="button">Sign Up</button>
+      <div id="statusMessage"></div>
+
+      <p>Already have an account? <a href="login.html">Login</a></p>
+    </div>
+
+    <script type="module">
+      // --- CAPTCHA check ---
+      if (sessionStorage.getItem("captchaPassed") !== "true") {
+        window.location.href = "../captcha.html";
+      } else {
+        sessionStorage.removeItem("captchaPassed");
+      }
+
+      import { auth } from "/firebase/firebase.js";
+      import {
+        createUserWithEmailAndPassword,
+        fetchSignInMethodsForEmail,
+      } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+      const signupBtn = document.getElementById("signupBtn");
+      const statusMessage = document.getElementById("statusMessage");
+      const emailInput = document.getElementById("email");
+      const nameInput = document.getElementById("name");
+      const usernameInput = document.getElementById("username");
+      const passwordInput = document.getElementById("password");
+      const confirmPasswordInput = document.getElementById("confirmPassword");
+      const togglePassword = document.getElementById("togglePassword");
+      const toggleConfirmPassword = document.getElementById(
+        "toggleConfirmPassword"
+      );
+
+      // Username validation on input
+      usernameInput.addEventListener("input", () => {
+        const username = usernameInput.value.trim();
+        const usernameError = document.getElementById("usernameError");
+        usernameError.textContent = "";
+
+        if (username.length > 0) {
+          // Check if username is "admin" (case-insensitive)
+          if (username.toLowerCase() === "admin") {
+            usernameError.textContent = "🚫 Username 'admin' is not allowed";
+            return;
+          }
+          
+          // Check for valid username format (alphanumeric and underscore only)
+          if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            usernameError.textContent = "❌ Username can only contain letters, numbers, and underscores";
+            return;
+          }
+          
+          // Check minimum length
+          if (username.length < 3) {
+            usernameError.textContent = "❌ Username must be at least 3 characters";
+            return;
+          }
+          
+          // Check maximum length
+          if (username.length > 50) {
+            usernameError.textContent = "❌ Username cannot exceed 50 characters";
+            return;
+          }
+        }
+      });
+
+      emailInput.addEventListener("input", async () => {
+        const email = emailInput.value.trim();
+        document.getElementById("emailError").textContent = "";
+        if (email.length > 5 && email.includes("@")) {
+          try {
+            const methods = await fetchSignInMethodsForEmail(auth, email);
+            if (methods.length > 0) {
+              document.getElementById("emailError").textContent =
+                "⚠️ You already used this email";
+            }
+          } catch (error) {}
+        }
+      });
+
+      // Toggle password visibility
+      togglePassword.addEventListener("click", () => {
+        const type =
+          passwordInput.getAttribute("type") === "password"
+            ? "text"
+            : "password";
+        passwordInput.setAttribute("type", type);
+      });
+      toggleConfirmPassword.addEventListener("click", () => {
+        const type =
+          confirmPasswordInput.getAttribute("type") === "password"
+            ? "text"
+            : "password";
+        confirmPasswordInput.setAttribute("type", type);
+      });
+
+      signupBtn.addEventListener("click", async () => {
+        const name = nameInput.value.trim();
+        const username = usernameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        // Clear old messages
+        document.getElementById("nameError").textContent = "";
+        document.getElementById("usernameError").textContent = "";
+        document.getElementById("emailError").textContent = "";
+        document.getElementById("passwordError").textContent = "";
+        document.getElementById("confirmError").textContent = "";
+        statusMessage.textContent = "";
+        statusMessage.className = "";
+
+        // Validations
+        if (name.length < 2) {
+          document.getElementById("nameError").textContent =
+            "❌ Please enter your full name";
+          return;
+        }
+        if (name.length > 100) {
+          document.getElementById("nameError").textContent =
+            "❌ Name cannot exceed 100 characters";
+          return;
+        }
+        if (/\d/.test(name)) {
+          // Regex check for digits
+          document.getElementById("nameError").textContent =
+            "🚫 Numbers are not allowed in name";
+          return;
+        }
+        if (name.toLowerCase().includes("admin")) {
+          document.getElementById("nameError").textContent =
+            '🚫 The name "admin" is not allowed';
+          return;
+        }
+
+        // Username validations
+        if (username.length === 0) {
+          document.getElementById("usernameError").textContent =
+            "❌ Please enter a username";
+          return;
+        }
+        if (username.length < 3) {
+          document.getElementById("usernameError").textContent =
+            "❌ Username must be at least 3 characters";
+          return;
+        }
+        if (username.length > 50) {
+          document.getElementById("usernameError").textContent =
+            "❌ Username cannot exceed 50 characters";
+          return;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          document.getElementById("usernameError").textContent =
+            "❌ Username can only contain letters, numbers, and underscores";
+          return;
+        }
+        // Check if username is "admin" (case-insensitive)
+        if (username.toLowerCase() === "admin") {
+          document.getElementById("usernameError").textContent =
+            "🚫 Username 'admin' is not allowed";
+          return;
+        }
+        if (!email.includes("@") || !email.includes(".")) {
+          document.getElementById("emailError").textContent =
+            "❌ Please enter a valid email";
+          return;
+        }
+        if (password.length < 6) {
+          document.getElementById("passwordError").textContent =
+            "❌ Password must be at least 6 characters";
+          return;
+        }
+        if (password !== confirmPassword) {
+          document.getElementById("confirmError").textContent =
+            "❌ Passwords do not match";
+          return;
+        }
+
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          statusMessage.textContent = "✅ Account created successfully!";
+          statusMessage.className = "success";
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 2000);
+        } catch (error) {
+          if (error.code === "auth/email-already-in-use") {
+            document.getElementById("emailError").textContent =
+              "❌ Email already in use";
+          } else if (error.code === "auth/weak-password") {
+            document.getElementById("passwordError").textContent =
+              "❌ Weak password";
+          } else {
+            statusMessage.textContent = "⚠️ " + error.message;
+            statusMessage.className = "error";
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

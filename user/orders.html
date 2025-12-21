@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Orders | Glow Mart</title>
+<link rel="icon" type="image/png" href="../images/logo.png">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+body {
+  background: #fff0f5;
+  padding: 20px;
+  min-height: 100vh;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+header {
+  background: linear-gradient(135deg, #ff4d7e, #ff8a00);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: 700;
+}
+.logo img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 15px;
+  border-radius: 5px;
+  transition: background 0.3s;
+}
+nav a:hover {
+  background: rgba(255,255,255,0.2);
+}
+h1 {
+  color: #ff4d7e;
+  margin-bottom: 30px;
+  text-align: center;
+}
+.order-card {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-left: 4px solid #ff4d7e;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.order-id {
+  font-weight: 700;
+  color: #ff4d7e;
+  font-size: 18px;
+}
+.order-date {
+  color: #999;
+  font-size: 14px;
+}
+.order-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.status-pending { background: #fff3cd; color: #856404; }
+.status-processing { background: #d1ecf1; color: #0c5460; }
+.status-shipped { background: #cce5ff; color: #004085; }
+.status-delivered { background: #d4edda; color: #155724; }
+.status-cancelled { background: #f8d7da; color: #721c24; }
+.order-items {
+  margin: 15px 0;
+}
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.order-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 15px;
+}
+.item-details {
+  flex: 1;
+}
+.item-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+.item-qty {
+  color: #999;
+  font-size: 14px;
+}
+.item-price {
+  font-weight: 700;
+  color: #ff4d7e;
+  font-size: 16px;
+}
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 15px;
+  border-top: 2px solid #e0e0e0;
+  margin-top: 15px;
+}
+.total-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+.total-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ff4d7e;
+}
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+.empty-state h2 {
+  color: #666;
+  margin-bottom: 10px;
+}
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="../images/logo.png" alt="Logo">
+    ✨ Glow Mart
+  </div>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../products.html">Products</a>
+    <a href="../cart.html">Cart</a>
+    <a href="orders.html">My Orders</a>
+  </nav>
+</header>
+
+<div class="container">
+  <h1>📦 My Orders</h1>
+  
+  <div id="ordersContainer">
+    <div class="loading">Loading your orders...</div>
+  </div>
+</div>
+
+<script type="module">
+import { db, collection, getDocs, query, where, orderBy } from '/firebase/firebase.js';
+import { auth, onAuthStateChanged } from '/firebase/firebase.js';
+
+let currentUser = null;
+
+// Get current user
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  if (user) {
+    console.log('✅ User authenticated:', user.email);
+    fetchUserOrders(user.email);
+  } else {
+    // Try to get from localStorage
+    const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+    if (userInfo.email) {
+      console.log('📧 Using email from localStorage:', userInfo.email);
+      fetchUserOrders(userInfo.email);
+    } else {
+      // Show guest message or all orders
+      console.log('👤 No user found, showing all orders');
+      fetchAllOrders();
+    }
+  }
+});
+
+// Fetch orders for specific user
+async function fetchUserOrders(userEmail) {
+  try {
+    console.log('📦 Fetching orders for:', userEmail);
+    const ordersRef = collection(db, 'orders');
+    const q = query(
+      ordersRef,
+      where('customerEmail', '==', userEmail),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    const orders = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      orders.push({
+        id: data.orderId || doc.id,
+        ...data
+      });
+    });
+    
+    console.log(`✅ Found ${orders.length} orders`);
+    renderOrders(orders);
+  } catch (error) {
+    console.error('❌ Error fetching orders:', error);
+    // If query fails (maybe no index), try fetching all
+    fetchAllOrders();
+  }
+}
+
+// Fetch all orders (fallback)
+async function fetchAllOrders() {
+  try {
+    console.log('📦 Fetching all orders...');
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    
+    const orders = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      orders.push({
+        id: data.orderId || doc.id,
+        ...data
+      });
+    });
+    
+    console.log(`✅ Found ${orders.length} orders`);
+    renderOrders(orders);
+  } catch (error) {
+    console.error('❌ Error fetching orders:', error);
+    renderOrders([]);
+  }
+}
+
+function renderOrders(orders) {
+  const container = document.getElementById('ordersContainer');
+  
+  if (orders.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <h2>No Orders Yet</h2>
+        <p>You haven't placed any orders yet.</p>
+        <a href="../products.html" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#ff4d7e;color:white;text-decoration:none;border-radius:8px;">Start Shopping</a>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  orders.forEach(order => {
+    const statusClass = `status-${order.status || 'pending'}`;
+    const date = new Date(order.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    const itemsHtml = (order.items || []).map(item => `
+      <div class="order-item">
+        <img src="${item.image || '../images/logo.png'}" alt="${item.name}" onerror="this.src='../images/logo.png'">
+        <div class="item-details">
+          <div class="item-name">${item.name}</div>
+          <div class="item-qty">Quantity: ${item.quantity}</div>
+        </div>
+        <div class="item-price">₨${(item.total || item.price * item.quantity).toLocaleString()}</div>
+      </div>
+    `).join('');
+    
+    html += `
+      <div class="order-card">
+        <div class="order-header">
+          <div>
+            <div class="order-id">${order.id}</div>
+            <div class="order-date">${date}</div>
+          </div>
+          <span class="order-status ${statusClass}">${order.status || 'pending'}</span>
+        </div>
+        <div class="order-items">
+          ${itemsHtml}
+        </div>
+        <div class="order-total">
+          <span class="total-label">Total Amount:</span>
+          <span class="total-amount">₨${Math.round(order.totalAmount || 0).toLocaleString()}</span>
+        </div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+}
+</script>
+
+</body>
+</html>
+

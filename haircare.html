@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Glow Mart | Hair Care</title>
+<link rel="icon" type="image/png" href="images/logo.png" />
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif;}
+body { 
+  background:#fff0f5; 
+  color:#333; 
+  overflow-y: scroll; /* ensures vertical scrollbar always appears */
+}
+
+
+/* Header */
+header {
+  background: linear-gradient(135deg,#ff4d7e,#ff8a00);
+  color:white;
+  padding:15px 25px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position: relative; /* changed from sticky */
+  /* top:0;  removed */
+  z-index:1000;
+}
+
+.logo{display:flex;align-items:center;gap:10px;font-size:26px;font-weight:700;}
+.logo img{width:45px;height:45px;border-radius:50%;border:2px solid white;}
+nav{display:flex;align-items:center;gap:20px;}
+nav a{color:white;text-decoration:none;font-weight:500;}
+nav a:hover{opacity:0.8;}
+#cartButton{
+  background:none;border:none;color:white;font-size:22px;cursor:pointer;position:relative;
+}
+#cartCountBadge{
+  position:absolute;top:-6px;right:-10px;
+  background:red;color:white;font-size:12px;
+  padding:2px 6px;border-radius:50%;display:none;
+}
+
+/* Search bar (same behaviour/look as Makeup file) */
+.search-bar { position: relative; display:flex; align-items:center; }
+#searchInput{
+  padding:6px 36px 6px 10px;
+  border-radius:20px;
+  border:none;
+  outline:none;
+  font-size:14px;
+  transition: width 0.35s ease, padding 0.2s;
+  width:0;
+  background: #fff;
+  color: #333;
+}
+#searchInput.expanded { width:200px; }
+.search-bar .search-icon {
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:16px;
+  cursor:pointer;
+  color:#333;
+  pointer-events:auto;
+}
+
+/* Products grid */
+.products-container{
+  display:flex;flex-wrap:wrap;gap:25px;justify-content:center;padding:40px;
+}
+.product{
+  background:#fff0f5;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  padding:15px;text-align:center;transition: transform 0.25s;
+  flex:1 1 calc(25% - 25px);max-width:calc(25% - 25px);overflow:hidden;position:relative;
+}
+.product:hover{transform: translateY(-6px);}
+
+/* Image zoom */
+.img-wrap{width:100%;border-radius:12px;overflow:hidden;display:block;}
+.product img{
+  width:100%;display:block;border-radius:12px;
+  transition: transform 0.35s ease;transform-origin:center center;cursor: zoom-in;
+}
+.product:hover img{transform: scale(1.06);}
+.product.zoomed img{transform: scale(1.6);cursor: zoom-out;}
+
+.product h3{font-size:16px;margin:10px 0;}
+.product p{font-size:14px;color:#555;margin-bottom:5px;}
+.price{font-size:15px;font-weight:bold;color:#ff4d7e;margin-bottom:10px;}
+.product button{
+  background:#ff4d7e;color:#fff;border:none;padding:10px 15px;border-radius:25px;cursor:pointer;
+}
+.product button:hover{background:#e04470;}
+
+.msg{font-size:13px;color:green;margin-top:6px;transition: opacity 0.5s;}
+.zoom-hint{font-size:12px;color:#777;margin-top:6px;}
+
+@media(max-width:1000px){.product{flex:1 1 calc(50% - 25px);max-width:calc(50% - 25px);}}
+@media(max-width:600px){.product{flex:1 1 100%;max-width:100%;}}
+
+footer{text-align:center;padding:25px;background:#222;color:#ddd;margin-top:20px;}
+footer a{color:#ff8a00;text-decoration:none;}
+/* Footer & Back-to-top */
+  footer {
+    background: #222; color: #ddd; text-align: center;
+    padding: 25px 10px; font-size: 14px;
+  }
+  footer a { color: #ff8a00; text-decoration: none; }
+
+  #scrollTopBtn {
+    display: none;
+    position: fixed; bottom: 40px; right: 40px; z-index: 9999;
+    font-size: 24px; border: none; outline: none; background-color: #ff4d7e;
+    color: white; cursor: pointer; padding: 12px 18px; border-radius: 50%;
+    transition: 0.3s;
+  }
+  /* Sorting & Filtering dropdowns */
+.controls {
+  text-align:center;
+  margin:20px;
+}
+.controls select {
+  padding:8px 12px;
+  border-radius:20px;
+  border:1px solid #ccc;
+  margin:0 10px;
+  font-size:14px;
+}
+
+
+
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="images/logo.png" alt="Logo"> ✨ Glow Mart
+  </div>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="products.html">Products</a>
+
+    <!-- Search bar (icon inside input, expands on click/focus) -->
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search Hair Care...">
+      <span class="search-icon" id="searchIcon">🔍</span>
+    </div>
+
+    <button id="cartButton">🛒<span id="cartCountBadge">0</span></button>
+  </nav>
+</header>
+
+<h1 style="text-align:center;margin-top:20px;">Hair Care Collection 💇‍♀️</h1>
+<!-- Sorting & Filtering Controls -->
+<div class="controls">
+  <select id="sortOptions">
+    <option value="default">Sort By</option>
+    <option value="priceLowHigh">Price: Low to High</option>
+    <option value="priceHighLow">Price: High to Low</option>
+  </select>
+
+  <select id="filterOptions">
+    <option value="all">Filter By Category</option>
+    <option value="oil">Hair Oils</option>
+    <option value="tools">Styling Tools</option>
+    <option value="combo">Combo Deals</option>
+  </select>
+</div>
+
+<div class="products-container" id="productsContainer">
+
+  <div class="product" data-category="oil">
+    <div class="img-wrap">
+      <img src="images/haircare/Alif Ahlam Herbs Infused Hair Oil.jpeg" alt="Alif Ahlam Herbs Infused Hair Oil">
+    </div>
+    <h3>Alif Ahlam Herbs Infused Hair Oil</h3>
+    <p>Natural herbs nourish & strengthen hair</p>
+    <div class="price">Rs. 950</div>
+    <button onclick="addToCart('Alif Ahlam Herbs Infused Hair Oil',950)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="oil">
+    <div class="img-wrap">
+      <img src="images/haircare/Rivaaj hair oil.jpeg" alt="Rivaj Hair Oil">
+    </div>
+    <h3>Rivaj Hair Oil</h3>
+    <p>Lightweight oil for smooth & shiny hair</p>
+    <div class="price">Rs. 780</div>
+    <button onclick="addToCart('Rivaj Hair Oil',780)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="oil">
+    <div class="img-wrap">
+      <img src="images/haircare/RIVAJ HAIR OIL and SHAMPOO.jpeg" alt="RIVAJ Hair Oil and Shampoo">
+    </div>
+    <h3>RIVAJ Hair Oil & Shampoo</h3>
+    <p>2-in-1 set for complete nourishment</p>
+    <div class="price">Rs. 1,250</div>
+    <button onclick="addToCart('RIVAJ Hair Oil & Shampoo',1250)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="tools">
+    <div class="img-wrap">
+      <img src="images/haircare/Kemei Hair Straightener.jpeg" alt="Kemei Hair Straightener">
+    </div>
+    <h3>Kemei Hair Straightener</h3>
+    <p>Quick & sleek straight look at home</p>
+    <div class="price">Rs. 2,800</div>
+    <button onclick="addToCart('Kemei Hair Straightener',2800)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="tools">
+    <div class="img-wrap">
+      <img src="images/haircare/Brushes Straightener.jpeg" alt="Brushes Straightener">
+    </div>
+    <h3>Brushes Straightener</h3>
+    <p>Portable hair brush with straightening power</p>
+    <div class="price">Rs. 1,950</div>
+    <button onclick="addToCart('Brushes Straightener',1950)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="tools">
+    <div class="img-wrap">
+      <img src="images/haircare/hair dryer and volumizer.jpeg" alt="Hair Dryer and Volumizer">
+    </div>
+    <h3>Hair Dryer & Volumizer</h3>
+    <p>Instant drying & added volume for your hair</p>
+    <div class="price">Rs. 3,200</div>
+    <button onclick="addToCart('Hair Dryer & Volumizer',3200)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="tools">
+    <div class="img-wrap">
+      <img src="images/haircare/Remington Sleek and Curl.jpeg" alt="Remington Sleek and Curl">
+    </div>
+    <h3>Remington Sleek & Curl</h3>
+    <p>Style curls or straight hair in minutes</p>
+    <div class="price">Rs. 4,500</div>
+    <button onclick="addToCart('Remington Sleek & Curl',4500)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="oil">
+    <div class="img-wrap">
+      <img src="images/haircare/Keratin Hair Mask and Hair Food Oil.jpeg" alt="Keratin Hair Mask and Hair Food Oil">
+    </div>
+    <h3>Keratin Hair Mask & Hair Food Oil</h3>
+    <p>Repair damaged hair & restore shine</p>
+    <div class="price">Rs. 1,150</div>
+    <button onclick="addToCart('Keratin Hair Mask & Hair Food Oil',1150)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="tools">
+    <div class="img-wrap">
+      <img src="images/haircare/Derma Roller.jpeg" alt="Derma Roller">
+    </div>
+    <h3>Derma Roller</h3>
+    <p>Stimulates scalp for faster hair growth</p>
+    <div class="price">Rs. 950</div>
+    <button onclick="addToCart('Derma Roller',950)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="combo">
+    <div class="img-wrap">
+      <img src="images/haircare/hair deal.jpeg" alt="Hair Deal">
+    </div>
+    <h3>Hair Care Combo Deal</h3>
+    <p>Complete set for everyday hair care</p>
+    <div class="price">Rs. 2,999</div>
+    <button onclick="addToCart('Hair Care Combo Deal',2999)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+  <div class="product" data-category="combo">
+    <div class="img-wrap">
+      <img src="images/haircare/WINTER SPECIAL DEAL.jpeg" alt="Winter Special Deal">
+    </div>
+    <h3>Winter Special Deal</h3>
+    <p>Perfect winter pack to prevent dry hair</p>
+    <div class="price">Rs. 2,450</div>
+    <button onclick="addToCart('Winter Special Deal',2450)">Add to Cart</button>
+    <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+  </div>
+
+</div>
+
+<!-- Haircare page -->
+<div id="haircare-section" data-category="haircare" data-heading="Haircare"></div>
+
+<footer>
+  © 2025 Glow Mart | All Rights Reserved | <a href="#">Privacy Policy</a>
+</footer>
+ <button id="scrollTopBtn" title="Go to top">↑</button>
+
+<script>
+/* Cart init & badge */
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+function updateCartBadge(){
+  const badge = document.getElementById('cartCountBadge');
+  const totalItems = cart.reduce((sum,item)=>sum+item.qty,0);
+  if(totalItems>0){ badge.style.display='inline-block'; badge.textContent=totalItems; }
+  else{ badge.style.display='none'; }
+}
+
+/* Add to cart + small message */
+function addToCart(name, price){
+  const existing = cart.find(item=>item.name===name);
+  if(existing){ existing.qty+=1; } 
+  else{ cart.push({name:name,price:price,qty:1}); }
+  localStorage.setItem('cart', JSON.stringify(cart));
+  updateCartBadge();
+
+  const card = Array.from(document.querySelectorAll('.product')).find(p=>p.querySelector('h3').innerText===name);
+  if(card){
+    const msg = document.createElement('div');
+    msg.className='msg';
+    msg.innerText='Successfully added to cart!';
+    card.appendChild(msg);
+    setTimeout(()=>{ msg.style.opacity='0'; setTimeout(()=>msg.remove(),500); }, 2000);
+  }
+}
+updateCartBadge();
+document.getElementById('cartButton').addEventListener('click',()=>{ window.location.href='cart.html'; });
+
+/* Zoom toggle */
+document.addEventListener('click', function(e){
+  const img = e.target.closest('.product img');
+  if(img){
+    const card = img.closest('.product');
+    if(card.classList.contains('zoomed')) card.classList.remove('zoomed');
+    else{
+      document.querySelectorAll('.product.zoomed').forEach(c=>c.classList.remove('zoomed'));
+      card.classList.add('zoomed');
+    }
+    return;
+  }
+  if(!e.target.closest('.product')){
+    document.querySelectorAll('.product.zoomed').forEach(c=>c.classList.remove('zoomed'));
+  }
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') document.querySelectorAll('.product.zoomed').forEach(c=>c.classList.remove('zoomed'));
+});
+
+/* Search functionality (same as Makeup) */
+const searchInput = document.getElementById('searchInput');
+const searchIcon = document.getElementById('searchIcon');
+const productsContainer = document.getElementById('productsContainer');
+
+// Click icon => expand & focus
+searchIcon.addEventListener('click', ()=>{
+  searchInput.classList.add('expanded');
+  searchInput.focus();
+});
+
+// Focus expand, blur collapse if empty
+searchInput.addEventListener('focus', ()=> searchInput.classList.add('expanded'));
+searchInput.addEventListener('blur', ()=> { if(searchInput.value.trim()==='') searchInput.classList.remove('expanded'); });
+
+// Live filter
+searchInput.addEventListener('input', ()=>{
+  const filter = searchInput.value.trim().toLowerCase();
+  document.querySelectorAll('.product').forEach(product=>{
+    const title = product.querySelector('h3').innerText.toLowerCase();
+    product.style.display = title.includes(filter) ? '' : 'none';
+  });
+});
+/* Sorting functionality */
+const sortOptions = document.getElementById('sortOptions');
+sortOptions.addEventListener('change', e => {
+  const option = e.target.value;
+  const container = document.getElementById('productsContainer');
+  const products = Array.from(container.querySelectorAll('.product'));
+
+  if(option === "priceLowHigh"){
+    products.sort((a,b) => {
+      const priceA = parseInt(a.querySelector('.price').innerText.replace(/\D/g,''));
+      const priceB = parseInt(b.querySelector('.price').innerText.replace(/\D/g,''));
+      return priceA - priceB;
+    });
+  } else if(option === "priceHighLow"){
+    products.sort((a,b) => {
+      const priceA = parseInt(a.querySelector('.price').innerText.replace(/\D/g,''));
+      const priceB = parseInt(b.querySelector('.price').innerText.replace(/\D/g,''));
+      return priceB - priceA;
+    });
+  }
+
+  products.forEach(p => container.appendChild(p));
+});
+
+/* Filtering functionality */
+const filterOptions = document.getElementById('filterOptions');
+filterOptions.addEventListener('change', e => {
+  const selected = e.target.value;
+  document.querySelectorAll('.product').forEach(product => {
+    const category = product.getAttribute('data-category');
+    const match = (selected === "all") || (category === selected);
+    product.style.display = match ? '' : 'none';
+  });
+});
+
+// Back to Top Button
+  const scrollBtn = document.getElementById("scrollTopBtn");
+  window.onscroll = function() {
+    scrollBtn.style.display = (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) ? "block" : "none";
+  };
+  scrollBtn.addEventListener("click", function() {
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+</script>
+
+<script src="js/cookies.js"></script>
+</body>
+</html>

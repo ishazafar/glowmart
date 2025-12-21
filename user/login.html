@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Glow Mart - Login</title>
+<link rel="icon" type="image/png" href="../images/logo.png" />
+
+<style>
+body {
+  font-family:'Poppins',sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
+  background:linear-gradient(135deg,#ff4d7e,#ff8a00);
+}
+.container {
+  background:rgba(255,255,255,0.95);
+  padding:30px;
+  border-radius:15px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.15);
+  width:100%;
+  max-width:400px;
+  text-align:center;
+}
+.input-wrapper {
+  position: relative;
+}
+input {
+  width:90%;
+  padding:10px;
+  margin:10px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px;
+}
+.eye-icon {
+  position:absolute;
+  right:15px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+  color:#333;
+}
+button {
+  width:100%;
+  padding:10px;
+  background:#ff4d7e;
+  color:white;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:16px;
+  margin-top:10px;
+}
+button:hover {
+  background:#e04470;
+}
+.error {
+  color:red;
+  font-size:13px;
+  text-align:left;
+  margin-left:5%;
+}
+.success {
+  color:green;
+  font-size:13px;
+  text-align:center;
+  margin-top:5px;
+}
+.forget {
+  font-size:13px;
+  margin-top:5px;
+  color:#ff4d7e;
+  cursor:pointer;
+  display:block;
+  text-align:right;
+}
+.forget:hover {
+  text-decoration:underline;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div style="display:flex; justify-content:center; margin-bottom:20px;">
+  <div style="
+    width:60px; 
+    height:60px; 
+    border-radius:50%; 
+    overflow:hidden; 
+    border:2px solid #fff; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  ">
+    <img src="../images/logo.png" alt="Glow Mart Logo" style="width:100%; height:100%; object-fit:cover;">
+  </div>
+</div>
+
+  <h2>Welcome Back 👋</h2>
+
+  <input type="email" id="email" placeholder="Email" autocomplete="off" required>
+  <div id="emailError" class="error"></div>
+
+  <div class="input-wrapper">
+    <input type="password" id="password" placeholder="Password" required>
+    <span class="eye-icon" id="togglePassword">&#128065;</span>
+  </div>
+  <div id="passwordError" class="error"></div>
+
+  <span class="forget" id="forgetPassword">Forgot Password?</span>
+
+  <button id="loginBtn">Login</button>
+  <div id="successMsg" class="success"></div>
+
+  <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+</div>
+
+<script type="module">
+import { auth } from "/firebase/firebase.js";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } 
+  from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+const loginBtn = document.getElementById('loginBtn');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const emailError = document.getElementById('emailError');
+const passwordError = document.getElementById('passwordError');
+const successMsg = document.getElementById('successMsg');
+const togglePassword = document.getElementById('togglePassword');
+const forgetPassword = document.getElementById('forgetPassword');
+
+// Toggle password visibility
+togglePassword.addEventListener('click', () => {
+  const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+  passwordInput.setAttribute('type', type);
+});
+
+// Login
+loginBtn.addEventListener('click', async () => {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  emailError.textContent = '';
+  passwordError.textContent = '';
+  successMsg.textContent = '';
+
+  if (email === '') { emailError.textContent = '❌ Please enter your email'; return; }
+  if (password === '') { passwordError.textContent = '❌ Please enter your password'; return; }
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Store user session in cookies
+    if (typeof CookieManager !== 'undefined') {
+      CookieManager.setSession('user', {
+        uid: user.uid,
+        email: user.email,
+        loginTime: new Date().toISOString()
+      }, 7); // 7 days session
+    }
+    // Also store in localStorage as fallback
+    localStorage.setItem('user', JSON.stringify({
+      uid: user.uid,
+      email: user.email
+    }));
+    
+    successMsg.textContent = '✅ Login successful!';
+    // Redirect to index.html (adjust path according to your folder structure)
+    setTimeout(() => { window.location.href = '../index.html'; }, 1500);
+  } catch (error) {
+    if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+      passwordError.textContent = '❌ Invalid email or password';
+    } else if (error.code === 'auth/user-not-found') {
+      emailError.textContent = '❌ No account found with this email';
+    } else if (error.code === 'auth/too-many-requests') {
+      passwordError.textContent = '⚠️ Too many attempts. Try again later.';
+    } else {
+      passwordError.textContent = '⚠️ ' + (error.message || 'Login failed, please try again');
+    }
+  }
+});
+
+// Forgot Password
+forgetPassword.addEventListener('click', async () => {
+  const email = emailInput.value.trim();
+  emailError.textContent = '';
+  successMsg.textContent = '';
+  if (email === '') {
+    emailError.textContent = '❌ Please enter your email to reset password';
+    return;
+  }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    successMsg.textContent = '✅ Password reset email sent!';
+  } catch (error) {
+    emailError.textContent = '⚠️ ' + (error.message || 'Could not send reset email');
+  }
+});
+</script>
+</body>
+</html>

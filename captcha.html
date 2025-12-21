@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glow Mart - CAPTCHA</title>
+<link rel="icon" type="image/png" href="../images/logo.png" />
+
+<style>
+body { font-family:'Poppins',sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; background:linear-gradient(135deg,#ff4d7e,#ff8a00);}
+.container { background:rgba(255,255,255,0.95); padding:30px; border-radius:15px; box-shadow:0 4px 20px rgba(0,0,0,0.15); width:100%; max-width:400px; text-align:center;}
+.logo { width:120px; margin-bottom:20px; }
+.captcha-box{ width:90%; margin:10px auto; padding:12px; border-radius:8px; border:1px solid #ddd; font-size:16px; background:#fff; }
+input{ width:90%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #ccc; font-size:14px; display:block; margin:auto; }
+button{ width:100%; padding:10px; background:#ff4d7e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; margin-top:10px; }
+button:hover{ background:#e04470; }
+.error{ color:red; font-size:13px; text-align:left; margin-left:5%; min-height:18px; }
+.success{ color:green; font-size:13px; text-align:center; margin-top:5px; min-height:18px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <img src="images/logo.png" alt="Glow Mart Logo" class="logo">
+  <h2>Verify You're Human ✅</h2>
+  <div class="captcha-box" id="questionBox">Loading CAPTCHA...</div>
+  <input type="text" id="captchaAnswer" placeholder="Type the answer here" autocomplete="off" />
+  <div id="captchaError" class="error"></div>
+  <button id="verifyBtn" type="button">Verify & Continue</button>
+  <div id="captchaSuccess" class="success"></div>
+</div>
+
+<script>
+const questionBox = document.getElementById('questionBox');
+const answerInput = document.getElementById('captchaAnswer');
+const verifyBtn = document.getElementById('verifyBtn');
+const errorDiv = document.getElementById('captchaError');
+const successDiv = document.getElementById('captchaSuccess');
+
+function newCaptcha(){
+  errorDiv.textContent = '';
+  successDiv.textContent = '';
+  answerInput.value = '';
+  const ops = ['+','-','×'];
+  const op = ops[Math.floor(Math.random()*ops.length)];
+  const a = Math.floor(Math.random()*8)+2;
+  const b = Math.floor(Math.random()*8)+1;
+  let text, result;
+  if(op === '+'){ text = `${a} + ${b}`; result = a + b; }
+  else if(op === '-'){ text = `${a+b} - ${b}`; result = (a+b) - b; }
+  else { text = `${a} × ${b}`; result = a * b; }
+  questionBox.textContent = 'Please solve: ' + text;
+  questionBox.dataset.answer = result.toString();
+}
+newCaptcha();
+
+verifyBtn.addEventListener('click', () => {
+  errorDiv.textContent = '';
+  successDiv.textContent = '';
+  const user = answerInput.value.trim();
+  if(user === ''){ 
+    errorDiv.textContent = '❌ Enter CAPTCHA answer'; 
+    answerInput.focus(); 
+    return; 
+  }
+  if(user === questionBox.dataset.answer){
+    sessionStorage.setItem('captchaPassed','true');
+    successDiv.textContent = '✅ Verified! Redirecting to Sign Up...';
+    setTimeout(()=>{ window.location.href='user/signup.html'; },700);
+  } else {
+    errorDiv.textContent = '❌ Wrong answer, try new CAPTCHA';
+    newCaptcha();
+    answerInput.focus();
+  }
+});
+
+answerInput.addEventListener('keydown',(e)=>{
+  if(e.key==='Enter') verifyBtn.click();
+});
+</script>
+</body>
+</html>

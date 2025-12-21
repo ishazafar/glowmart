@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlowMart Admin - Products</title>
+<link rel="icon" type="image/png" href="../images/logo.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif}
+:root{
+  --primary:#1e3c72;
+  --accent:#1e3c72;
+  --muted:#f6f6f9;
+  --card:#ffffff;
+  --text:#222;
+  --ghost:#6b7280;
+  --shadow:0 6px 18px rgba(16,24,40,0.06);
+}
+html,body{height:100%;background:linear-gradient(180deg,#fff 0%,#fffafc 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.topbar{
+  position:absolute;
+  top:0; left:0; width:calc(100% - 24px);
+  margin:12px;
+  z-index:100;
+  border-radius:12px;
+  background:var(--primary);
+  display:flex; align-items:center; padding:12px 20px; gap:12px; cursor:move; user-select:none;
+}
+.nav-left{display:flex;align-items:center;gap:12px}
+.nav-left img{height:32px;width:32px;object-fit:cover;border-radius:6px}
+.nav-left h1{font-size:16px;color:#fff;margin-left:6px}
+
+.nav-center{display:flex;gap:8px;align-items:center;margin-left:20px}
+.nav-center a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:8px;font-weight:600;font-size:14px}
+.nav-center a.active{background:rgba(255,255,255,0.2)}
+
+.search-bar{position:relative;display:flex;align-items:center;margin-left:auto}
+#searchInput{
+  padding:6px 36px 6px 10px;
+  border-radius:20px; border:none; outline:none; font-size:14px; transition: width 0.35s ease, padding 0.2s;
+  width:0; background:#fff; color:#333;
+}
+#searchInput.expanded{width:200px;}
+.search-bar .search-icon{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:16px; cursor:pointer; color:#333; pointer-events:auto;}
+
+/* LAYOUT */
+.layout{display:flex;gap:20px;padding:18px;margin-top:56px}
+.sidebar{width:240px;min-height:calc(100vh - 76px);overflow:auto}
+.sidebar .menu{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);height:100%;overflow:auto}
+.menu a{display:flex;gap:10px;align-items:center;padding:10px;border-radius:8px;color:var(--ghost);text-decoration:none;margin-bottom:6px}
+.menu a.active{background:linear-gradient(90deg,var(--accent),#1e3c72);color:#fff}
+
+.content{flex:1;overflow:auto}
+.panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #f1f1f6}
+th{font-size:13px;color:var(--ghost)}
+input,button{font-family:'Poppins',sans-serif}
+button.btn{background:var(--primary);color:#fff;padding:6px 8px;border:0;border-radius:6px;cursor:pointer}
+button.btn.reset{background:#eee;color:var(--text)}
+.inlineMsg{margin-left:8px;color:var(--primary)}
+.sidebar::-webkit-scrollbar,.content::-webkit-scrollbar{height:8px;width:8px}
+.sidebar::-webkit-scrollbar-thumb,.content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:8px}
+.form-row{display:flex;gap:10px;margin-bottom:8px}
+.form-row .field{flex:1}
+label{display:block;font-size:13px;color:var(--ghost);margin-bottom:4px}
+input[type=text],input[type=number]{width:100%;padding:6px;border-radius:6px;border:1px solid #ccc}
+</style>
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="nav-left">
+    <img id="siteLogo" src="../images/logo.png" alt="GlowMart logo">
+    <h1>GlowMart Admin</h1>
+    <nav class="nav-center">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="products.html" class="active">Products</a>
+      <a href="orders.html">Orders</a>
+      <a href="customers.html">Customers</a>
+    </nav>
+  </div>
+  <div class="search-bar">
+    <input id="searchInput" placeholder="Search products..." />
+    <span class="search-icon">&#128269;</span>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="menu">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="products.html" class="active">Products</a>
+      <a href="orders.html">Orders</a>
+      <a href="customers.html">Customers</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="panel">
+      <h2>Quick Add Product</h2>
+      <form id="addProductForm">
+        <div class="form-row">
+          <div class="field">
+            <label>Product Name</label>
+            <input name="name" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Price (PKR)</label>
+            <input name="price" type="number" required />
+          </div>
+          <div class="field">
+            <label>Stock</label>
+            <input name="stock" type="number" required />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+          <button type="submit" class="btn">Add Product</button>
+          <button type="button" class="btn reset" onclick="resetForm()">Reset</button>
+          <span id="formMsg" class="inlineMsg"></span>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2>Product List</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
+        <tbody id="productsTable"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+const productsState=[
+  {id:'P001',name:'Huda Beauty Palette',price:2999,stock:12},
+  {id:'P002',name:'Facial Cleanser',price:899,stock:40},
+  {id:'P003',name:'Perfume - Bloom',price:1499,stock:8}
+];
+
+function renderProducts(){
+  const tbody=document.getElementById('productsTable'); tbody.innerHTML='';
+  productsState.forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td contenteditable="true">${p.id}</td>
+                    <td contenteditable="true">${p.name}</td>
+                    <td contenteditable="true">${p.price}</td>
+                    <td contenteditable="true">${p.stock}</td>
+                    <td>
+                      <button class='btn' onclick="saveProduct('${p.id}',this)">Save</button>
+                      <button class='btn' onclick="deleteProduct('${p.id}',this)">Delete</button>
+                      <span class='inlineMsg'></span>
+                    </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function saveProduct(id,btn){
+  const tr=btn.closest('tr');
+  const p=productsState.find(x=>x.id===id);
+  if(p){
+    p.id=tr.children[0].textContent.trim();
+    p.name=tr.children[1].textContent.trim();
+    p.price=Number(tr.children[2].textContent.trim());
+    p.stock=Number(tr.children[3].textContent.trim());
+  }
+  renderProducts();
+  btn.nextElementSibling.textContent='Saved';
+  setTimeout(()=>{btn.nextElementSibling.textContent=''},2000);
+}
+
+function deleteProduct(id,btn){
+  const idx=productsState.findIndex(x=>x.id===id);
+  if(idx>-1) productsState.splice(idx,1);
+  renderProducts();
+  btn.nextElementSibling.textContent='Deleted';
+  setTimeout(()=>{btn.nextElementSibling.textContent=''},2000);
+}
+
+const addForm=document.getElementById('addProductForm');
+addForm.addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=e.target.name.value.trim();
+  const price=Number(e.target.price.value);
+  const stock=Number(e.target.stock.value);
+  const msg=document.getElementById('formMsg');
+  msg.textContent='';
+  if(!name||price<=0||stock<0){msg.textContent='Please fill valid values';return;}
+  const newId='P'+String(productsState.length+1).padStart(3,'0');
+  productsState.push({id:newId,name,price,stock});
+  renderProducts();
+  e.target.reset();
+  msg.textContent='Product added';
+  setTimeout(()=>{msg.textContent=''},2000);
+});
+
+/* SEARCH */
+const searchInput=document.getElementById('searchInput');
+const searchIcon=document.querySelector('.search-icon');
+searchIcon.addEventListener('click',()=>searchInput.classList.toggle('expanded'));
+searchInput.addEventListener('input',function(e){
+  const q=e.target.value.trim().toLowerCase();
+  const tbody=document.getElementById('productsTable');tbody.innerHTML='';
+  if(q.length===0){renderProducts(); return;}
+  productsState.filter(p=>p.id.toLowerCase().includes(q)||p.name.toLowerCase().includes(q))
+    .forEach(p=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td contenteditable="true">${p.id}</td>
+                      <td contenteditable="true">${p.name}</td>
+                      <td contenteditable="true">${p.price}</td>
+                      <td contenteditable="true">${p.stock}</td>
+                      <td>
+                        <button class='btn' onclick="saveProduct('${p.id}',this)">Save</button>
+                        <button class='btn' onclick="deleteProduct('${p.id}',this)">Delete</button>
+                        <span class='inlineMsg'></span>
+                      </td>`;
+      tbody.appendChild(tr);
+    });
+});
+
+/* MOVEABLE HEADER */
+const topbar=document.getElementById('topbar');
+let isDragging=false,offsetX=0,offsetY=0;
+topbar.addEventListener('mousedown',e=>{isDragging=true;offsetX=e.clientX-topbar.getBoundingClientRect().left;offsetY=e.clientY-topbar.getBoundingClientRect().top;topbar.style.transition='none';});
+document.addEventListener('mousemove',e=>{if(!isDragging) return; let newX=e.clientX-offsetX; let newY=e.clientY-offsetY; if(newX<0)newX=0;if(newY<0)newY=0;if(newX+topbar.offsetWidth>window.innerWidth)newX=window.innerWidth-topbar.offsetWidth;if(newY+topbar.offsetHeight>window.innerHeight)newY=window.innerHeight-topbar.offsetHeight;topbar.style.left=newX+'px';topbar.style.top=newY+'px';});
+document.addEventListener('mouseup',()=>{if(isDragging){isDragging=false;topbar.style.transition='left 0.2s ease, top 0.2s ease';}});
+
+renderProducts();
+</script>
+</body>
+</html>

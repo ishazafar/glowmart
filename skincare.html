@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glow Mart | Skin Care</title>
+<link rel="icon" type="image/png" href="images/logo.png" />
+<style>
+* { box-sizing: border-box; margin:0; padding:0; font-family:'Poppins', sans-serif;}
+body { 
+  background:#fff0f5; 
+  color:#333; 
+  overflow-y: scroll; /* ensures vertical scrollbar always appears */
+}
+
+
+/* Header */
+header {
+  background: linear-gradient(135deg,#ff4d7e,#ff8a00);
+  color:white;
+  padding:15px 25px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position: relative; /* changed from sticky */
+  /* top:0;  removed */
+  z-index:1000;
+}
+
+.logo { display:flex; align-items:center; gap:10px; font-size:26px; font-weight:700; }
+.logo img { width:45px; height:45px; border-radius:50%; border:2px solid white; }
+nav { display:flex; align-items:center; gap:15px; position:relative; }
+
+/* Nav links */
+nav a { color:white; text-decoration:none; font-weight:500; }
+nav a:hover { opacity:0.85; }
+
+/* Cart icon */
+#cartButton {
+  background:none;border:none;color:white;font-size:22px;cursor:pointer;position:relative;
+}
+#cartCountBadge {
+  position:absolute;top:-6px;right:-10px;
+  background:red;color:white;font-size:12px;
+  padding:2px 6px;border-radius:50%;display:none;
+}
+
+/* Search bar (same as Makeup) */
+.search-bar {
+  position: relative;
+  display:flex;
+  align-items:center;
+}
+#searchInput {
+  width:0;
+  padding:6px 35px 6px 10px;
+  border-radius:20px;
+  border:none;
+  outline:none;
+  font-size:14px;
+  transition: width 0.35s ease, padding 0.35s ease;
+  background: #fff;
+  color: #333;
+}
+#searchInput.expanded { width:180px; padding:6px 35px 6px 10px; }
+.search-bar .search-icon {
+  position:absolute;
+  right:8px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:16px;
+  cursor:pointer;
+  color:#333;
+  user-select:none;
+}
+
+/* Products grid */
+.products-container { display:flex; flex-wrap:wrap; gap:25px; justify-content:center; padding:40px; }
+.product {
+  background:#fff0f5; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  padding:15px; text-align:center; transition: transform 0.25s; flex:1 1 calc(25% - 25px);
+  max-width: calc(25% - 25px); overflow:hidden; position:relative;
+}
+.product:hover { transform: translateY(-6px); }
+
+.img-wrap { width:100%; border-radius:12px; overflow:hidden; display:block; }
+.product img {
+  width:100%; display:block; border-radius:12px;
+  transition: transform 0.35s ease; transform-origin:center center; cursor: zoom-in;
+}
+.product:hover img { transform: scale(1.06); }
+.product.zoomed img { transform: scale(1.6); cursor: zoom-out; }
+
+.product h3 { font-size:16px; margin:10px 0; }
+.product p { font-size:14px; color:#555; margin:6px 0; }
+.product .price { font-size:15px; font-weight:700; color:#ff4d7e; margin:8px 0; }
+.product button { background:#ff4d7e; color:white; border:none; padding:10px 14px; border-radius:25px; cursor:pointer; font-weight:600; }
+.product button:hover { background:#e04470; }
+
+.msg { font-size:13px; color:green; margin-top:6px; transition: opacity 0.5s; }
+.zoom-hint { font-size:12px; color:#777; margin-top:6px; }
+
+@media(max-width:1000px){ .product { flex:1 1 calc(50% - 25px); max-width:calc(50% - 25px);} }
+@media(max-width:600px){ .product { flex:1 1 100%; max-width:100%;} }
+
+footer { text-align:center; padding:25px; background:#222; color:#ddd; }
+footer a { color:#ff8a00; text-decoration:none; }
+/* Footer & Back-to-top */
+  footer {
+    background: #222; color: #ddd; text-align: center;
+    padding: 25px 10px; font-size: 14px;
+  }
+  footer a { color: #ff8a00; text-decoration: none; }
+
+  #scrollTopBtn {
+    display: none;
+    position: fixed; bottom: 40px; right: 40px; z-index: 9999;
+    font-size: 24px; border: none; outline: none; background-color: #ff4d7e;
+    color: white; cursor: pointer; padding: 12px 18px; border-radius: 50%;
+    transition: 0.3s;
+  }
+  #scrollTopBtn:hover { background-color: #e04470; }
+  /* Sorting & Filtering dropdowns */
+.controls {
+  text-align:center;
+  margin:20px;
+}
+.controls select {
+  padding:8px 12px;
+  border-radius:20px;
+  border:1px solid #ccc;
+  margin:0 10px;
+  font-size:14px;
+}
+
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="images/logo.png" alt="Logo"> ✨ Glow Mart
+  </div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="products.html">Products</a>
+
+    <!-- Search bar (same UX as Makeup) -->
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search Skin Care...">
+      <span class="search-icon" id="searchIcon">🔍</span>
+    </div>
+
+    <!-- Cart -->
+    <button id="cartButton">🛒<span id="cartCountBadge">0</span></button>
+  </nav>
+</header>
+
+<h1 style="text-align:center; margin-top:20px;">Skin Care Collection 🌿</h1>
+<!-- Sorting & Filtering Controls -->
+<div class="controls">
+  <select id="sortOptions">
+    <option value="default">Sort By</option>
+    <option value="priceLowHigh">Price: Low to High</option>
+    <option value="priceHighLow">Price: High to Low</option>
+  </select>
+
+  <select id="filterOptions">
+    <option value="all">Filter By Category</option>
+    <option value="facial">Facial Kits</option>
+    <option value="serum">Serums</option>
+    <option value="organic">Organic Care</option>
+    <option value="deal">Deals</option>
+    <option value="manicure">Manicure/Pedicure</option>
+  </select>
+</div>
+
+<!-- give id for JS filtering -->
+<div class="products-container" id="productsContainer">
+
+  <!-- Products with images intact -->
+  <!-- Products with images intact -->
+<div class="product" data-category="facial">
+  <div class="img-wrap">
+    <img src="images/skincare/Dr Rashel Hydra Facial Kit.jpeg" alt="Dr Rashel Hydra Facial Kit">
+  </div>
+  <h3>Dr Rashel Hydra Facial Kit</h3>
+  <p>Hydrating facial kit for glowing skin</p>
+  <div class="price">₨2,500</div>
+  <div class="actions"><button onclick="addToCart('Dr Rashel Hydra Facial Kit',2500)">Add to Cart</button></div>
+  <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+</div>
+
+<div class="product" data-category="serum">
+  <div class="img-wrap">
+    <img src="images/skincare/NIACINAMIDE SERUM.jpeg" alt="NIACINAMIDE SERUM">
+  </div>
+  <h3>NIACINAMIDE SERUM</h3>
+  <p>Brightens skin and reduces dark spots</p>
+  <div class="price">₨1,800</div>
+  <div class="actions"><button onclick="addToCart('NIACINAMIDE SERUM',1800)">Add to Cart</button></div>
+  <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+</div>
+
+<div class="product" data-category="organic">
+  <div class="img-wrap">
+    <img src="images/skincare/Biaqua Rice Raw Pulp.jpeg" alt="Biaqua Rice Raw Pulp">
+  </div>
+  <h3>Biaqua Rice Raw Pulp</h3>
+  <p>Natural rice pulp for smooth skin</p>
+  <div class="price">₨2,200</div>
+  <div class="actions"><button onclick="addToCart('Biaqua Rice Raw Pulp',2200)">Add to Cart</button></div>
+  <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+</div>
+
+<div class="product" data-category="facial">
+  <div class="img-wrap">
+    <img src="images/skincare/Kashees Whitening Facial Set.jpeg" alt="Kashees Whitening Facial Set">
+  </div>
+  <h3>Kashees Whitening Facial Set</h3>
+  <p>Whitening facial treatment for radiant skin</p>
+  <div class="price">₨2,800</div>
+  <div class="actions"><button onclick="addToCart('Kashees Whitening Facial Set',2800)">Add to Cart</button></div>
+  <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+</div>
+
+<div class="product" data-category="deal">
+  <div class="img-wrap">
+    <img src="images/skincare/Gluta White Deal.jpeg" alt="Gluta White Deal">
+  </div>
+  <h3>Gluta White Deal</h3>
+  <p>Glutathione infused brightening set</p>
+  <div class="price">₨3,200</div>
+  <div class="actions"><button onclick="addToCart('Gluta White Deal',3200)">Add to Cart</button></div>
+  <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+</div>
+
+<div class="product" data-category="manicure">
+  <div class="img-wrap">
+    <img src="images/skincare/Hand & Foot Manicure - Pedicure.jpeg" alt="Hand & Foot Manicure - Pedicure">
+  </div>
+  <h3>Hand & Foot Manicure - Pedicure</h3>
+  <p>Nail care and skin hydration treatment</p>
+  <div class="price">₨1,500</div>
+  <div class="actions"><button onclick="addToCart('Hand & Foot Manicure - Pedicure',1500)">Add to Cart</button></div>
+  <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+</div>
+
+<div class="product" data-category="organic">
+  <div class="img-wrap">
+    <img src="images/skincare/The Health Healer Organic Brightening.jpeg" alt="The Health Healer Organic Brightening">
+  </div>
+  <h3>The Health Healer Organic Brightening</h3>
+  <p>Organic brightening kit for healthy skin</p>
+  <div class="price">₨2,700</div>
+  <div class="actions"><button onclick="addToCart('The Health Healer Organic Brightening',2700)">Add to Cart</button></div>
+  <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+</div>
+
+<div class="product" data-category="facial">
+  <div class="img-wrap">
+    <img src="images/skincare/KASHEES SKIN POLISH MASAGAER FREE.jpeg" alt="KASHEES SKIN POLISH MASAGAER FREE">
+  </div>
+  <h3>KASHEES SKIN POLISH MASAGAER FREE</h3>
+  <p>Polish & massage for glowing skin</p>
+  <div class="price">₨1,900</div>
+  <div class="actions"><button onclick="addToCart('KASHEES SKIN POLISH MASAGAER FREE',1900)">Add to Cart</button></div>
+  <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+</div>
+
+<div class="product" data-category="facial">
+  <div class="img-wrap">
+    <img src="images/skincare/Gold facial set.jpeg" alt="Gold facial set">
+  </div>
+  <h3>Gold Facial Set</h3>
+  <p>Luxury gold infused facial treatment</p>
+  <div class="price">₨5,000</div>
+  <div class="actions"><button onclick="addToCart('Gold Facial Set',5000)">Add to Cart</button></div>
+  <div class="zoom-hint">Hover to zoom • Click to toggle</div>
+</div>
+
+</div>
+<!-- Skincare page -->
+<div id="skincare-section" data-category="skincare" data-heading="Skincare"></div>
+
+<footer>
+  © 2025 Glow Mart | All Rights Reserved | <a href="#" style="color:#ff8a00;">Privacy Policy</a>
+</footer>
+<button id="scrollTopBtn" title="Go to top">↑</button>
+<script>
+// Initialize cart
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+const badge = document.getElementById('cartCountBadge');
+const productsContainer = document.getElementById('productsContainer');
+const searchInput = document.getElementById('searchInput') || document.getElementById('searchInput') /* safety */;
+const searchIcon = document.getElementById('searchIcon');
+
+// update cart badge
+function updateCartBadge(){
+  const totalItems = cart.reduce((sum,item)=>sum+item.qty,0);
+  if(totalItems>0){ badge.style.display='inline-block'; badge.textContent=totalItems; }
+  else{ badge.style.display='none'; }
+}
+
+// add to cart
+function addToCart(name, price){
+  const existing = cart.find(item=>item.name===name);
+  if(existing){ existing.qty+=1; } 
+  else{ cart.push({name:name,price:price,qty:1}); }
+  localStorage.setItem('cart', JSON.stringify(cart));
+  updateCartBadge();
+
+  // show small success message on card
+  const card = Array.from(document.querySelectorAll('.product')).find(p=>p.querySelector('h3').innerText===name);
+  if(card){
+    const msg = document.createElement('div');
+    msg.className='msg';
+    msg.innerText='Successfully added to cart!';
+    card.appendChild(msg);
+    setTimeout(()=>{ msg.style.opacity='0'; setTimeout(()=>msg.remove(),500); }, 2000);
+  }
+}
+
+// initial badge
+updateCartBadge();
+document.getElementById('cartButton').addEventListener('click',()=>{ window.location.href='cart.html'; });
+
+// zoom toggle behaviour
+document.addEventListener('click', function(e){
+  const img = e.target.closest('.product img');
+  if(img){
+    const card = img.closest('.product');
+    if(card.classList.contains('zoomed')) card.classList.remove('zoomed');
+    else{
+      document.querySelectorAll('.product.zoomed').forEach(c=>c.classList.remove('zoomed'));
+      card.classList.add('zoomed');
+    }
+    return;
+  }
+  if(!e.target.closest('.product')) document.querySelectorAll('.product.zoomed').forEach(c=>c.classList.remove('zoomed'));
+});
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape') document.querySelectorAll('.product.zoomed').forEach(c=>c.classList.remove('zoomed'));
+});
+
+// --- Search functionality (same as Makeup) ---
+const searchEl = document.getElementById('searchInput');
+const iconEl = document.getElementById('searchIcon');
+
+// expand on focus, collapse on blur if empty
+searchEl.addEventListener('focus', ()=> searchEl.classList.add('expanded'));
+searchEl.addEventListener('blur', ()=> { if(searchEl.value.trim() === '') searchEl.classList.remove('expanded'); });
+
+// icon click focuses input (and expands)
+iconEl.addEventListener('click', ()=> { searchEl.classList.add('expanded'); searchEl.focus(); });
+
+// live filter
+searchEl.addEventListener('input', function(){
+  const q = this.value.trim().toLowerCase();
+  Array.from(productsContainer.children).forEach(product => {
+    const title = product.querySelector('h3').innerText.toLowerCase();
+    product.style.display = title.includes(q) ? '' : 'none';
+  });
+});
+
+/* Sorting functionality */
+const sortOptions = document.getElementById('sortOptions');
+sortOptions.addEventListener('change', e => {
+  const option = e.target.value;
+  const container = document.getElementById('productsContainer');
+  const products = Array.from(container.querySelectorAll('.product'));
+
+  if(option === "priceLowHigh"){
+    products.sort((a,b) => {
+      const priceA = parseInt(a.querySelector('.price').innerText.replace(/\D/g,''));
+      const priceB = parseInt(b.querySelector('.price').innerText.replace(/\D/g,''));
+      return priceA - priceB;
+    });
+  } else if(option === "priceHighLow"){
+    products.sort((a,b) => {
+      const priceA = parseInt(a.querySelector('.price').innerText.replace(/\D/g,''));
+      const priceB = parseInt(b.querySelector('.price').innerText.replace(/\D/g,''));
+      return priceB - priceA;
+    });
+  }
+
+  products.forEach(p => container.appendChild(p));
+});
+
+/* Filtering functionality */
+const filterOptions = document.getElementById('filterOptions');
+filterOptions.addEventListener('change', e => {
+  const selected = e.target.value;
+  document.querySelectorAll('.product').forEach(product => {
+    const category = product.getAttribute('data-category');
+    const match = (selected === "all") || (category === selected);
+    product.style.display = match ? '' : 'none';
+  });
+});
+
+// Back to Top Button
+  const scrollBtn = document.getElementById("scrollTopBtn");
+  window.onscroll = function() {
+    scrollBtn.style.display = (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) ? "block" : "none";
+  };
+  scrollBtn.addEventListener("click", function() {
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+</script>
+
+<script src="js/cookies.js"></script>
+</body>
+</html>

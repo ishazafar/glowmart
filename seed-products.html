@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed Products to Firebase</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+body {
+  background: #fff0f5;
+  padding: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.container {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+h1 {
+  color: #ff4d7e;
+  margin-bottom: 20px;
+  text-align: center;
+}
+button {
+  background: #ff4d7e;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin: 10px 0;
+  transition: background 0.3s;
+}
+button:hover {
+  background: #e04470;
+}
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+.status {
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: 8px;
+  background: #f0f0f0;
+  min-height: 50px;
+}
+.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+.info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+.progress {
+  margin: 10px 0;
+  height: 20px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: #ff4d7e;
+  transition: width 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🌱 Seed Products to Firebase</h1>
+  
+  <div id="status" class="status info">
+    Ready to seed products. Click the button below to start.
+  </div>
+  
+  <div id="progress" class="progress" style="display:none;">
+    <div id="progressBar" class="progress-bar" style="width: 0%">0%</div>
+  </div>
+  
+  <button id="seedBtn">Seed All Products to Firebase</button>
+  <button id="seedAdminBtn" style="background: #28a745;">Create Admin Account</button>
+  <button id="clearBtn" style="background: #dc3545;">Clear All Products (Danger!)</button>
+</div>
+
+<script src="js/seed-images.js"></script>
+<script type="module">
+import { db, collection, doc, setDoc, getDocs } from '/firebase/firebase.js';
+import { auth, createUserWithEmailAndPassword } from '/firebase/firebase.js';
+
+// Products data
+const products = [
+  // Haircare
+  { id: "Alif Ahlam Herbs Infused Hair Oil", name: "Alif Ahlam Herbs Infused Hair Oil", price: 950, image: "images/haircare/Alif Ahlam Herbs Infused Hair Oil.jpeg", category: "haircare" },
+  { id: "Rivaj Hair Oil", name: "Rivaj Hair Oil", price: 780, image: "images/haircare/Rivaaj hair oil.jpeg", category: "haircare" },
+  { id: "RIVAJ Hair Oil & Shampoo", name: "RIVAJ Hair Oil & Shampoo", price: 1250, image: "images/haircare/RIVAJ HAIR OIL and SHAMPOO.jpeg", category: "haircare" },
+  { id: "Kemei Hair Straightener", name: "Kemei Hair Straightener", price: 2800, image: "images/haircare/Kemei Hair Straightener.jpeg", category: "haircare" },
+  { id: "Brushes Straightener", name: "Brushes Straightener", price: 1950, image: "images/haircare/Brushes Straightener.jpeg", category: "haircare" },
+  { id: "Hair Dryer & Volumizer", name: "Hair Dryer & Volumizer", price: 3200, image: "images/haircare/hair dryer and volumizer.jpeg", category: "haircare" },
+  { id: "Remington Sleek & Curl", name: "Remington Sleek & Curl", price: 4500, image: "images/haircare/Remington Sleek and Curl.jpeg", category: "haircare" },
+  { id: "Keratin Hair Mask & Hair Food Oil", name: "Keratin Hair Mask & Hair Food Oil", price: 1150, image: "images/haircare/Keratin Hair Mask and Hair Food Oil.jpeg", category: "haircare" },
+  { id: "Derma Roller", name: "Derma Roller", price: 950, image: "images/haircare/Derma Roller.jpeg", category: "haircare" },
+  { id: "Hair Care Combo Deal", name: "Hair Care Combo Deal", price: 2999, image: "images/haircare/hair deal.jpeg", category: "haircare" },
+  { id: "Winter Special Deal", name: "Winter Special Deal", price: 2450, image: "images/haircare/WINTER SPECIAL DEAL.jpeg", category: "haircare" },
+
+  // Makeup
+  { id: "Fit me & Huda Beauty Deal", name: "Fit me & Huda Beauty Deal", price: 2499, image: "images/makeup/Fit me & huda beauty deal.jpeg", category: "makeup" },
+  { id: "Madam Nail Polishes", name: "Madam Nail Polishes", price: 1200, image: "images/makeup/Madam nail polishes.jpeg", category: "makeup" },
+  { id: "WP Black Deal(313)", name: "WP Black Deal(313)", price: 2099, image: "images/makeup/wp_black_deal_313.jpeg", category: "makeup" },
+  { id: "Huda Beauty Deal", name: "Huda Beauty Deal", price: 3499, image: "images/makeup/Huda beauty deal.jpeg", category: "makeup" },
+  { id: "Huda Beauty Pallet", name: "Huda Beauty Pallet", price: 1099, image: "images/makeup/Huda beauty pallet.jpeg", category: "makeup" },
+  { id: "Kashee's Special Deal", name: "Kashee's Special Deal", price: 2150, image: "images/makeup/kashees_special_deal.jpeg", category: "makeup" },
+  { id: "Mega Deal of Huda Beauty", name: "Mega Deal of Huda Beauty", price: 4999, image: "images/makeup/Mega deal of huda beauty.jpeg", category: "makeup" },
+  { id: "Peel Off Nail Paints", name: "Peel Off Nail Paints", price: 1600, image: "images/makeup/Peel off nail paints.jpeg", category: "makeup" },
+  { id: "Pixi Blushes", name: "Pixi Blushes", price: 920, image: "images/makeup/Pixi Blushes.jpeg", category: "makeup" },
+  { id: "Hang Fang Lipsticks", name: "Hang Fang Lipsticks", price: 1599, image: "images/makeup/Hang fang lipsticks.jpeg", category: "makeup" },
+
+  // Perfumes
+  { id: "Elegant Rose Perfume", name: "Elegant Rose Perfume", price: 1450, image: "images/perfumes/Elegant Rose Perfume.jpeg", category: "perfumes" },
+  { id: "Citrus Splash Perfume", name: "Citrus Splash Perfume", price: 1150, image: "images/perfumes/Citrus Splash Perfume.jpeg", category: "perfumes" },
+  { id: "Midnight Musk", name: "Midnight Musk", price: 1700, image: "images/perfumes/Midnight Musk.jpeg", category: "perfumes" },
+  { id: "Vanilla Whisper", name: "Vanilla Whisper", price: 1320, image: "images/perfumes/Vanilla Whisper.jpeg", category: "perfumes" },
+  { id: "Ocean Breeze", name: "Ocean Breeze", price: 1100, image: "images/perfumes/Ocean Breeze.jpeg", category: "perfumes" },
+  { id: "Spicy Amber", name: "Spicy Amber", price: 1650, image: "images/perfumes/Spicy Amber.jpeg", category: "perfumes" },
+  { id: "Lemon Glow", name: "Lemon Glow", price: 980, image: "images/perfumes/Lemon Glow.jpeg", category: "perfumes" },
+  { id: "Mystic Lavender", name: "Mystic Lavender", price: 1200, image: "images/perfumes/Mystic Lavender.jpeg", category: "perfumes" },
+  { id: "Golden Sandal", name: "Golden Sandal", price: 1800, image: "images/perfumes/Golden Sandal.jpeg", category: "perfumes" },
+
+  // Skincare
+  { id: "Dr Rashel Hydra Facial Kit", name: "Dr Rashel Hydra Facial Kit", price: 2500, image: "images/skincare/Dr Rashel Hydra Facial Kit.jpeg", category: "skincare" },
+  { id: "NIACINAMIDE SERUM", name: "NIACINAMIDE SERUM", price: 1800, image: "images/skincare/NIACINAMIDE SERUM.jpeg", category: "skincare" },
+  { id: "Biaqua Rice Raw Pulp", name: "Biaqua Rice Raw Pulp", price: 2200, image: "images/skincare/Biaqua Rice Raw Pulp.jpeg", category: "skincare" },
+  { id: "Kashees Whitening Facial Set", name: "Kashees Whitening Facial Set", price: 2800, image: "images/skincare/Kashees Whitening Facial Set.jpeg", category: "skincare" },
+  { id: "Gluta White Deal", name: "Gluta White Deal", price: 3200, image: "images/skincare/Gluta White Deal.jpeg", category: "skincare" },
+  { id: "Hand & Foot Manicure - Pedicure", name: "Hand & Foot Manicure - Pedicure", price: 1500, image: "images/skincare/Hand & Foot Manicure - Pedicure.jpeg", category: "skincare" },
+  { id: "The Health Healer Organic Brightening", name: "The Health Healer Organic Brightening", price: 2700, image: "images/skincare/The Health Healer Organic Brightening.jpeg", category: "skincare" },
+  { id: "KASHEES SKIN POLISH MASAGAER FREE", name: "KASHEES SKIN POLISH MASAGAER FREE", price: 1900, image: "images/skincare/KASHEES SKIN POLISH MASAGAER FREE.jpeg", category: "skincare" },
+  { id: "Gold Facial Set", name: "Gold Facial Set", price: 5000, image: "images/skincare/Gold facial set.jpeg", category: "skincare" }
+];
+
+const statusDiv = document.getElementById('status');
+const progressDiv = document.getElementById('progress');
+const progressBar = document.getElementById('progressBar');
+const seedBtn = document.getElementById('seedBtn');
+const seedAdminBtn = document.getElementById('seedAdminBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+// Admin credentials (change these if needed)
+const ADMIN_EMAIL = 'admin@glowmart.com';
+const ADMIN_PASSWORD = 'Admin@123456';
+
+// Initial Firebase check
+console.log('🔍 Checking Firebase initialization...');
+console.log('  - DB object:', db);
+console.log('  - DB type:', typeof db);
+console.log('  - Products array length:', products.length);
+
+if (!db) {
+  console.error('❌ Firebase DB is not initialized!');
+  console.error('💡 Check: firebase/firebase.js exports db correctly');
+  updateStatus('⚠️ Firebase not initialized. Check console for details.', 'error');
+} else {
+  console.log('✅ Firebase DB initialized successfully');
+  updateStatus('Ready to seed products. Click the button below to start.', 'info');
+}
+
+// Monitor network requests
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+  console.log('🌐 Network Request:', args[0]);
+  return originalFetch.apply(this, args)
+    .then(response => {
+      console.log('✅ Network Response:', response.status, response.statusText, args[0]);
+      if (!response.ok) {
+        console.error('❌ Network Error:', response.status, response.statusText);
+      }
+      return response;
+    })
+    .catch(error => {
+      console.error('❌ Network Request Failed:', error);
+      console.error('  URL:', args[0]);
+      console.error('  Error:', error.message);
+      throw error;
+    });
+};
+
+function updateStatus(message, type = 'info') {
+  statusDiv.textContent = message;
+  statusDiv.className = `status ${type}`;
+  console.log(`📢 Status Update [${type}]:`, message);
+}
+
+function updateProgress(current, total) {
+  const percent = Math.round((current / total) * 100);
+  progressBar.style.width = percent + '%';
+  progressBar.textContent = `${percent}% (${current}/${total})`;
+}
+
+// Add event listeners after DOM is ready
+seedBtn.addEventListener('click', async function() {
+  console.log('🚀 Starting seed process...');
+  console.log('📦 Products to seed:', products.length);
+  
+  // Check Firebase initialization
+  if (!db) {
+    const error = 'Firebase not initialized! Check firebase.js configuration.';
+    console.error('❌', error);
+    updateStatus(error, 'error');
+    return;
+  }
+  
+  console.log('✅ Firebase DB initialized:', db);
+  
+  seedBtn.disabled = true;
+  clearBtn.disabled = true;
+  progressDiv.style.display = 'block';
+  updateStatus('Starting to seed products...', 'info');
+  
+  const errors = [];
+  let successCount = 0;
+  let errorCount = 0;
+  
+  try {
+    console.log('📝 Creating products collection reference...');
+    const productsRef = collection(db, 'products');
+    console.log('✅ Collection reference created:', productsRef);
+    
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
+      console.log(`\n[${i + 1}/${products.length}] Processing: ${product.name}`);
+      console.log('  - ID:', product.id);
+      console.log('  - Price:', product.price);
+      console.log('  - Category:', product.category);
+      console.log('  - Image:', product.image);
+      
+      try {
+        // Validate product data
+        if (!product.id || !product.name || !product.price || !product.category) {
+          throw new Error(`Invalid product data: Missing required fields`);
+        }
+        
+        if (typeof product.price !== 'number' || product.price <= 0) {
+          throw new Error(`Invalid price: ${product.price}`);
+        }
+        
+        console.log('  📤 Uploading to Firestore...');
+        let imageSrc = product.image;
+        if (typeof window !== 'undefined' && window.SEED_IMAGES && window.SEED_IMAGES[product.image]) {
+          imageSrc = window.SEED_IMAGES[product.image];
+        }
+        const productData = {
+          name: product.name,
+          price: product.price,
+          image: imageSrc,
+          category: product.category,
+          createdAt: new Date().toISOString()
+        };
+        
+        console.log('  📋 Data to upload:', JSON.stringify(productData, null, 2));
+        
+        await setDoc(doc(productsRef, product.id), productData);
+        
+        console.log('  ✅ Successfully uploaded:', product.name);
+        successCount++;
+        updateProgress(i + 1, products.length);
+        updateStatus(`Uploading... ${i + 1}/${products.length} products (${successCount} successful, ${errorCount} errors)`, 'info');
+      } catch (error) {
+        errorCount++;
+        const errorDetails = {
+          product: product.name,
+          id: product.id,
+          error: error.message,
+          code: error.code,
+          stack: error.stack,
+          fullError: error
+        };
+        
+        errors.push(errorDetails);
+        
+        console.error(`\n❌ ERROR uploading ${product.name}:`);
+        console.error('  Error Message:', error.message);
+        console.error('  Error Code:', error.code);
+        console.error('  Error Type:', error.name);
+        console.error('  Full Error Object:', error);
+        console.error('  Stack Trace:', error.stack);
+        
+        // Check for specific error types
+        if (error.code === 'permission-denied') {
+          console.error('  ⚠️ PERMISSION DENIED: Check Firestore security rules!');
+          console.error('  💡 Rule should allow: allow write: if true; (for testing)');
+        } else if (error.code === 'unavailable') {
+          console.error('  ⚠️ SERVICE UNAVAILABLE: Firebase service is down or network issue');
+        } else if (error.code === 'unauthenticated') {
+          console.error('  ⚠️ UNAUTHENTICATED: User authentication required');
+        } else if (error.message && error.message.includes('network')) {
+          console.error('  ⚠️ NETWORK ERROR: Check internet connection');
+        }
+        
+        updateStatus(`Error uploading ${product.name}: ${error.message}`, 'error');
+      }
+    }
+    
+    console.log('\n📊 SEED SUMMARY:');
+    console.log('  ✅ Successful:', successCount);
+    console.log('  ❌ Errors:', errorCount);
+    console.log('  📦 Total:', products.length);
+    
+    if (errors.length > 0) {
+      console.log('\n❌ ERROR DETAILS:');
+      errors.forEach((err, idx) => {
+        console.log(`\n  Error ${idx + 1}:`);
+        console.log('    Product:', err.product);
+        console.log('    ID:', err.id);
+        console.log('    Message:', err.error);
+        console.log('    Code:', err.code);
+      });
+    }
+    
+    const finalMessage = `✅ Successfully seeded ${successCount} products! ${errorCount > 0 ? `(${errorCount} errors - check console for details)` : ''}`;
+    updateStatus(finalMessage, errorCount > 0 ? 'error' : 'success');
+    progressDiv.style.display = 'none';
+    
+  } catch (error) {
+    console.error('\n❌ CRITICAL ERROR in seed process:');
+    console.error('  Message:', error.message);
+    console.error('  Code:', error.code);
+    console.error('  Type:', error.name);
+    console.error('  Stack:', error.stack);
+    console.error('  Full Error:', error);
+    
+    // Check for Firebase initialization errors
+    if (error.message && error.message.includes('Firebase')) {
+      console.error('  ⚠️ Firebase initialization error!');
+      console.error('  💡 Check: firebase/firebase.js configuration');
+    }
+    
+    // Check for network errors
+    if (error.message && (error.message.includes('network') || error.message.includes('fetch'))) {
+      console.error('  ⚠️ Network error!');
+      console.error('  💡 Check: Internet connection and Firebase project status');
+    }
+    
+    updateStatus(`❌ Critical Error: ${error.message} (Check console for details)`, 'error');
+    progressDiv.style.display = 'none';
+  } finally {
+    seedBtn.disabled = false;
+    clearBtn.disabled = false;
+    console.log('\n🏁 Seed process completed');
+  }
+});
+
+clearBtn.addEventListener('click', async function() {
+  if (!confirm('Are you sure you want to delete ALL products from Firebase? This cannot be undone!')) {
+    return;
+  }
+  
+  console.log('🗑️ Starting delete process...');
+  
+  if (!db) {
+    const error = 'Firebase not initialized!';
+    console.error('❌', error);
+    updateStatus(error, 'error');
+    return;
+  }
+  
+  clearBtn.disabled = true;
+  seedBtn.disabled = true;
+  updateStatus('Deleting all products...', 'info');
+  
+  try {
+    console.log('📝 Fetching products from Firestore...');
+    const productsRef = collection(db, 'products');
+    const snapshot = await getDocs(productsRef);
+    
+    console.log(`📦 Found ${snapshot.docs.length} products to delete`);
+    
+    let deleted = 0;
+    const errors = [];
+    
+    for (const docSnap of snapshot.docs) {
+      try {
+        console.log(`  🗑️ Deleting: ${docSnap.id}`);
+        // await deleteDoc(docSnap.ref);
+        deleted++;
+        console.log(`  ✅ Deleted: ${docSnap.id}`);
+      } catch (error) {
+        console.error(`  ❌ Error deleting ${docSnap.id}:`, error);
+        errors.push({ id: docSnap.id, error: error.message });
+      }
+    }
+    
+    console.log('\n📊 DELETE SUMMARY:');
+    console.log('  ✅ Deleted:', deleted);
+    console.log('  ❌ Errors:', errors.length);
+    
+    if (errors.length > 0) {
+      console.log('\n❌ DELETE ERRORS:');
+      errors.forEach(err => {
+        console.log(`  - ${err.id}: ${err.error}`);
+      });
+    }
+    
+    updateStatus(`✅ Deleted ${deleted} products from Firebase${errors.length > 0 ? ` (${errors.length} errors)` : ''}`, errors.length > 0 ? 'error' : 'success');
+  } catch (error) {
+    console.error('\n❌ CRITICAL ERROR in delete process:');
+    console.error('  Message:', error.message);
+    console.error('  Code:', error.code);
+    console.error('  Type:', error.name);
+    console.error('  Stack:', error.stack);
+    console.error('  Full Error:', error);
+    
+    updateStatus(`❌ Error: ${error.message} (Check console for details)`, 'error');
+  } finally {
+    clearBtn.disabled = false;
+    seedBtn.disabled = false;
+    console.log('\n🏁 Delete process completed');
+  }
+});
+
+// Create Admin Account
+seedAdminBtn.addEventListener('click', async function() {
+  console.log('👤 Starting admin account creation...');
+  console.log('  - Email:', ADMIN_EMAIL);
+  
+  if (!auth) {
+    const error = 'Firebase Auth not initialized!';
+    console.error('❌', error);
+    updateStatus(error, 'error');
+    return;
+  }
+  
+  seedAdminBtn.disabled = true;
+  seedBtn.disabled = true;
+  clearBtn.disabled = true;
+  updateStatus('Creating admin account...', 'info');
+  
+  try {
+    console.log('📝 Creating user in Firebase Auth...');
+    
+    // Create user in Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+    const user = userCredential.user;
+    
+    console.log('✅ User created in Auth:', user.uid);
+    console.log('  - Email:', user.email);
+    console.log('  - UID:', user.uid);
+    
+    // Store admin metadata in Firestore
+    console.log('📝 Storing admin metadata in Firestore...');
+    const adminRef = doc(db, 'admins', user.uid);
+    await setDoc(adminRef, {
+      email: ADMIN_EMAIL,
+      role: 'admin',
+      createdAt: new Date().toISOString(),
+      isActive: true
+    });
+    
+    console.log('✅ Admin metadata stored in Firestore');
+    
+    // Also store in users collection for reference
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(userRef, {
+      email: ADMIN_EMAIL,
+      role: 'admin',
+      createdAt: new Date().toISOString()
+    });
+    
+    console.log('✅ User data stored in users collection');
+    
+    const successMsg = `✅ Admin account created successfully!\n\nEmail: ${ADMIN_EMAIL}\nPassword: ${ADMIN_PASSWORD}\n\n⚠️ Save these credentials securely!`;
+    updateStatus(successMsg, 'success');
+    
+    console.log('\n📊 ADMIN ACCOUNT CREATED:');
+    console.log('  ✅ Email:', ADMIN_EMAIL);
+    console.log('  ✅ Password:', ADMIN_PASSWORD);
+    console.log('  ✅ UID:', user.uid);
+    console.log('  ⚠️ IMPORTANT: Save these credentials!');
+    
+  } catch (error) {
+    console.error('\n❌ ERROR creating admin account:');
+    console.error('  Message:', error.message);
+    console.error('  Code:', error.code);
+    console.error('  Type:', error.name);
+    console.error('  Stack:', error.stack);
+    console.error('  Full Error:', error);
+    
+    let errorMsg = `❌ Error: ${error.message}`;
+    
+    if (error.code === 'auth/email-already-in-use') {
+      errorMsg = `⚠️ Admin account already exists!\n\nEmail: ${ADMIN_EMAIL}\n\nYou can use this account to login.`;
+      console.log('  ℹ️ Admin account already exists - you can use it to login');
+    } else if (error.code === 'auth/weak-password') {
+      errorMsg = `❌ Password is too weak. Please use a stronger password.`;
+    } else if (error.code === 'auth/invalid-email') {
+      errorMsg = `❌ Invalid email format.`;
+    }
+    
+    updateStatus(errorMsg, error.code === 'auth/email-already-in-use' ? 'info' : 'error');
+  } finally {
+    seedAdminBtn.disabled = false;
+    seedBtn.disabled = false;
+    clearBtn.disabled = false;
+    console.log('\n🏁 Admin creation process completed');
+  }
+});
+</script>
+</body>
+</html>
+

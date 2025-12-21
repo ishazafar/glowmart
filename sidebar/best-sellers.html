@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Glow Mart - Offers</title>
+<link rel="icon" type="image/png" href="../images/logo.png">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
+  /* pink-ish background like makeup/perfume pages */
+  body{
+    background: linear-gradient(135deg, #fff0f5 0%, #ffeef2 50%, #fff7ea 100%);
+    color:#333;
+    line-height:1.45;
+  }
+
+  /* HEADER (normal flow so it moves with scroll) */
+  header{
+    width:100%;
+    background:linear-gradient(135deg,#ff4d7e,#ff8a00);
+    color:#fff;
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:0 2px 8px rgba(0,0,0,0.12);
+  }
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px}
+  .logo img{width:44px;height:44px;border-radius:8px;border:2px solid #fff;object-fit:cover}
+  nav a{color:#fff;text-decoration:none;margin-left:16px;font-weight:600}
+  nav a:hover{opacity:.95}
+
+  /* PAGE HEADER */
+  .page-header{ text-align:center; padding:48px 16px 20px 16px }
+  .page-header h1{font-size:30px; margin-bottom:8px; color:#b8005a}
+  .page-header p{color:#555; max-width:820px; margin:0 auto}
+
+  /* GRID - max 4 per row on wide screens */
+  .content{
+    max-width:1200px;
+    margin:28px auto;
+    padding:0 18px 60px;
+    display:grid;
+    gap:26px;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1100px){
+    .content{ grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 820px){
+    .content{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px){
+    .content{ grid-template-columns: 1fr; padding:0 12px; }
+  }
+
+  /* CARD (perfume-like larger cards) */
+  .card{
+    background: #fff;
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+    position:relative;
+    transition: transform .22s ease, box-shadow .22s ease;
+  }
+  .card:hover{ transform: translateY(-6px); box-shadow: 0 14px 30px rgba(0,0,0,0.10); }
+
+  .imgwrap{
+    width:100%;
+    height:320px; /* perfume-card height */
+    overflow:hidden;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+    background: linear-gradient(180deg, rgba(255,77,126,0.04), rgba(255,138,0,0.02));
+  }
+  .imgwrap img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    transition: transform .45s ease;
+    transform-origin:center center;
+  }
+  .imgwrap:hover img{ transform: scale(1.12); } /* zoom inside image only */
+
+  .body{
+    padding:14px 14px 18px;
+    text-align:center;
+  }
+  .title{
+    font-weight:700;
+    color:#333;
+    font-size:15px;
+    margin-bottom:8px;
+    min-height:40px; /* keep equal card text height */
+  }
+  .price{
+    color:#ff4d7e;
+    font-weight:800;
+    font-size:16px;
+    margin-bottom:6px;
+  }
+  .note{ font-size:13px; color:#666; margin-top:6px }
+
+  .offer-label{
+    position:absolute;
+    left:12px;
+    top:12px;
+    background:#ff4d7e;
+    color:#fff;
+    padding:7px 11px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:12px;
+    box-shadow:0 4px 12px rgba(255,77,126,0.12);
+  }
+
+  /* Scroll to top button */
+  #scrollTop {
+    position:fixed;
+    right:22px;
+    bottom:22px;
+    z-index:1200;
+    width:48px;height:48px;border-radius:50%;
+    background:#ff4d7e;color:#fff;border:none;font-size:20px;
+    display:none; cursor:pointer;
+    box-shadow:0 8px 20px rgba(0,0,0,0.12);
+  }
+  #scrollTop:hover{ background:#e04470; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="../images/logo.png" alt="Glow Mart">
+    Glow Mart
+  </div>
+
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../about.html">About</a>
+    <a href="../contact.html">Contact</a>
+    <a href="../user/signup.html">Sign Up</a>
+    <a href="../user/login.html">Login</a>
+  </nav>
+</header>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <h1>Best Sellers</h1>
+  <p>Check out our most loved and popular products ✨</p>
+</section>
+
+<!-- PRODUCTS GRID -->
+<div class="content">
+    <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/Lemon Glow.jpeg" alt="Lemon Glow"></div>
+    <p>Lemon Glow</p>
+    <p class="price">PKR 1,200</p>
+  </div>
+
+  <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/Madam nail polishes.jpeg" alt="Madam nail polishes"></div>
+    <p>Madam Nail Polishes</p>
+    <p class="price">PKR 950</p>
+  </div>
+
+  <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/Midnight Musk.jpeg" alt="Midnight Musk"></div>
+    <p>Midnight Musk</p>
+    <p class="price">PKR 3,500</p>
+  </div>
+
+  <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/Remington Sleek and Curl.jpeg" alt="Remington Sleek and Curl"></div>
+    <p>Remington Sleek & Curl</p>
+    <p class="price">PKR 4,200</p>
+  </div>
+
+  <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/Huda beauty pallet.jpeg" alt="Huda beauty pallet"></div>
+    <p>Huda beauty pallet</p>
+    <p class="price">PKR 1,200</p>
+  </div>
+
+  <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/KASHEES SKIN POLISH MASAGER FREE.jpeg" alt="KASHEES SKIN POLISH MASAGER FREE"></div>
+    <p>KASHEES SKIN POLISH MASSAGER FREE</p>
+    <p class="price">PKR 2,300</p>
+  </div>
+
+  <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/kashees_special_deal.jpeg" alt="kashees_special_deal"></div>
+    <p>Kashees Special Deal</p>
+    <p class="price">PKR 1,800</p>
+  </div>
+
+  <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/Keratin Hair Mask and Hair Food Oil.jpeg" alt="Keratin Hair Mask and Hair Food Oil"></div>
+    <p>Keratin Hair Mask & Hair Food Oil</p>
+    <p class="price">PKR 2,900</p>
+  </div>
+
+  <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/Rivaaj hair oil.jpeg" alt="Rivaaj hair oil"></div>
+    <p>Rivaaj Hair Oil</p>
+    <p class="price">PKR 1,100</p>
+  </div>
+
+  <div class="product-card">
+    <div class="imgwrap"><img src="../images/best-sellers/NIACINAMIDE SERUM.jpeg" alt="NIACINAMIDE SERUM"></div>
+    <p>NIACINAMIDE SERUM</p>
+    <p class="price">PKR 1,750</p>
+  </div>
+</div>
+
+<!-- SCROLL TO TOP -->
+<button id="scrollBtn" title="Go to top">↑</button>
+
+<script>
+function getCart(){return JSON.parse(localStorage.getItem('cart'))||[];}
+function getTotalQty(){return getCart().reduce((s,i)=>s+(i.qty||0),0);}
+function updateCartBadge(){const b=document.getElementById('cartCountBadge');if(!b)return;const n=getTotalQty();b.style.display=n>0?'inline-block':'none';b.textContent=n;}
+document.addEventListener('DOMContentLoaded',updateCartBadge);
+
+const scrollBtn=document.getElementById('scrollBtn');
+window.addEventListener('scroll',()=>{scrollBtn.style.display=(document.documentElement.scrollTop>300)?'block':'none';});
+scrollBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+</script>
+
+</body>
+</html>

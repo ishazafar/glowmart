@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glow Mart | Cart</title>
+<link rel="icon" type="image/png" href="images/logo.png">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+  font-family: 'Poppins', Arial, sans-serif; 
+  padding: 20px; 
+  background: #fff0f5; 
+  min-height: 100vh;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+h1 { 
+  color: #ff4d7e; 
+  text-align: center; 
+  margin-bottom: 30px; 
+  font-size: 2em;
+}
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  margin-bottom: 30px; 
+  background: white;
+}
+th, td { 
+  border: 1px solid #e0e0e0; 
+  padding: 15px; 
+  text-align: center; 
+}
+th { 
+  background: linear-gradient(135deg, #ff4d7e, #ff8a00); 
+  color: white; 
+  font-weight: 600;
+}
+td { 
+  color: #333; 
+}
+tbody tr:hover {
+  background: #fff5f8;
+}
+input[type=number] { 
+  width: 60px; 
+  padding: 5px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+button { 
+  padding: 10px 20px; 
+  border: none; 
+  background: #ff4d7e; 
+  color: #fff; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+button:hover { 
+  background: #e04470; 
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 77, 126, 0.3);
+}
+#checkout-btn {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 20px auto;
+  padding: 15px 30px;
+  font-size: 18px;
+}
+.empty-cart {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+.empty-cart a {
+  color: #ff4d7e;
+  text-decoration: none;
+  font-weight: 600;
+}
+/* Centered message box */
+#msg-box { 
+  max-width: 400px;
+  margin: 20px auto 0 auto;
+  text-align: center; 
+  padding: 15px; 
+  font-weight: bold; 
+  color: white; 
+  background: #28a745; 
+  border-radius: 8px; 
+  display: none; 
+}
+#msg-box.error {
+  background: #dc3545;
+}
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@media (max-width: 768px) {
+  .container { padding: 15px; }
+  table { font-size: 14px; }
+  th, td { padding: 10px 5px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🛒 Your Shopping Cart</h1>
+
+  <div id="cart-content">
+    <table id="cart-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Total Price</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" style="text-align:right; font-weight:bold;">Grand Total:</td>
+          <td colspan="2" id="grand-total" style="font-weight:bold; color:#ff4d7e; font-size:1.2em;">₨0</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <button id="checkout-btn" onclick="checkout()">
+      <span id="checkout-text">Proceed to Checkout</span>
+      <span id="checkout-loading" class="loading" style="display:none;"></span>
+    </button>
+  </div>
+
+  <div id="empty-cart" class="empty-cart" style="display:none;">
+    <h2>Your cart is empty</h2>
+    <p>Add some products to get started!</p>
+    <a href="index.html">Continue Shopping</a>
+  </div>
+
+  <div id="msg-box"></div>
+</div>
+
+<!-- Load Stripe.js -->
+<script src="https://js.stripe.com/v3/"></script>
+<script src="js/cookies.js"></script>
+
+<script>
+// ⚠️ IMPORTANT: Replace with your Stripe Publishable Key
+// Get it from: https://dashboard.stripe.com/test/apikeys
+const STRIPE_PUBLISHABLE_KEY = "pk_test_51SUSY1JLcO0XW0WyHgBFD5zZTuMiBiMTwwDbGgtbL1wPUOMXFSIQMJsplVHPOpXuj7MCKFU2NtTQ4ZV8p07ZxiKP00ygULdiLg";
+
+// Server endpoint - Automatically detects the current domain
+// For local development: http://localhost:3000
+// For production: Uses current domain automatically
+const SERVER_URL = (() => {
+  // Check if we're in development (localhost)
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3000';
+  }
+  // For production, use the current origin (Vercel will handle the API routes)
+  return window.location.origin;
+})();
+
+// Initialize Stripe - Wait for script to load
+let stripe = null;
+
+function initializeStripe() {
+  // Check if Stripe.js has loaded
+  if (typeof Stripe === 'undefined') {
+    console.warn('Stripe.js not loaded yet, retrying...');
+    setTimeout(initializeStripe, 100);
+    return;
+  }
+
+  // Check if we're in a sandboxed iframe
+  try {
+    if (STRIPE_PUBLISHABLE_KEY && STRIPE_PUBLISHABLE_KEY !== "pk_test_YOUR_PUBLISHABLE_KEY_HERE") {
+      // Check if we're in an iframe without proper sandbox permissions
+      if (window.self !== window.top) {
+        try {
+          // Try to access parent - if this fails, we're in a restricted iframe
+          window.parent.document;
+        } catch (e) {
+          console.warn('⚠️ Page is in a sandboxed iframe. Stripe requires allow-same-origin sandbox attribute on the iframe.');
+          console.warn('If you control the iframe, add: <iframe sandbox="allow-same-origin allow-scripts allow-forms">');
+        }
+      }
+      
+      stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+      console.log('✅ Stripe initialized successfully');
+    } else {
+      console.warn("⚠️ Stripe Publishable Key not set! Please update STRIPE_PUBLISHABLE_KEY in cart.html");
+    }
+  } catch (error) {
+    console.error('Error initializing Stripe:', error);
+    if (error.message && error.message.includes('sandbox')) {
+      console.error('⚠️ Stripe.js requires allow-same-origin if sandboxed. If this page is in an iframe, add sandbox="allow-same-origin allow-scripts allow-forms" to the iframe tag.');
+    }
+  }
+}
+
+// Start initialization when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeStripe);
+} else {
+  // DOM already loaded
+  initializeStripe();
+}
+
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+function renderCart() {
+  const tbody = document.querySelector('#cart-table tbody');
+  const cartContent = document.getElementById('cart-content');
+  const emptyCart = document.getElementById('empty-cart');
+  
+  if (cart.length === 0) {
+    cartContent.style.display = 'none';
+    emptyCart.style.display = 'block';
+    return;
+  }
+  
+  cartContent.style.display = 'block';
+  emptyCart.style.display = 'none';
+  tbody.innerHTML = '';
+  
+  let grandTotal = 0;
+  cart.forEach((item, index) => {
+    const total = item.price * item.qty;
+    grandTotal += total;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.name || item.id}</td>
+      <td>₨${item.price.toLocaleString()}</td>
+      <td><input type="number" min="1" value="${item.qty}" onchange="updateQty(${index}, this.value)"></td>
+      <td>₨${total.toLocaleString()}</td>
+      <td><button onclick="removeItem(${index})">Remove</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  document.getElementById('grand-total').textContent = '₨' + grandTotal.toLocaleString();
+}
+
+function updateQty(index, qty) {
+  const newQty = parseInt(qty);
+  if (newQty < 1) {
+    showMessage("Quantity must be at least 1", "#dc3545");
+    renderCart();
+    return;
+  }
+  cart[index].qty = newQty;
+  localStorage.setItem('cart', JSON.stringify(cart));
+  renderCart();
+}
+
+function removeItem(index) {
+  if (confirm('Remove this item from cart?')) {
+    cart.splice(index, 1);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    renderCart();
+    showMessage("Item removed from cart", "#28a745");
+  }
+}
+
+async function checkout() {
+  if (cart.length === 0) {
+    showMessage("Cart is empty!", "#dc3545");
+    return;
+  }
+
+  // Wait for Stripe to be ready (retry if not loaded yet)
+  if (!stripe) {
+    // Try to initialize again
+    if (typeof Stripe !== 'undefined' && STRIPE_PUBLISHABLE_KEY && STRIPE_PUBLISHABLE_KEY !== "pk_test_YOUR_PUBLISHABLE_KEY_HERE") {
+      try {
+        stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+      } catch (error) {
+        console.error('Stripe initialization error:', error);
+        showMessage("Stripe initialization failed. Please refresh the page.", "#dc3545");
+        return;
+      }
+    } else {
+      showMessage("Stripe is still loading. Please wait a moment and try again.", "#dc3545");
+      // Retry initialization
+      setTimeout(() => {
+        if (typeof Stripe !== 'undefined') {
+          initializeStripe();
+        }
+      }, 500);
+      return;
+    }
+  }
+
+  // Final check
+  if (!stripe) {
+    showMessage("Stripe not configured. Please check your publishable key and refresh the page.", "#dc3545");
+    return;
+  }
+
+  // Show loading state
+  const checkoutBtn = document.getElementById('checkout-btn');
+  const checkoutText = document.getElementById('checkout-text');
+  const checkoutLoading = document.getElementById('checkout-loading');
+  checkoutBtn.disabled = true;
+  checkoutText.style.display = 'none';
+  checkoutLoading.style.display = 'inline-block';
+
+  try {
+    // Normalize cart items to ensure consistent structure
+    const normalizedCart = cart.map(item => ({
+      name: item.name || item.title || item.id || 'Product',
+      price: parseFloat(item.price) || 0,
+      qty: parseInt(item.qty) || 1,
+      image: item.image || item.img || '',
+      id: item.id || item.name || item.title || '',
+      description: item.description || ''
+    }));
+
+    // Validate cart has valid items
+    if (normalizedCart.some(item => item.price <= 0)) {
+      throw new Error('Invalid item prices in cart');
+    }
+
+    // Create checkout session on server
+    // Use /api/create-checkout-session for Vercel deployment
+    const apiUrl = SERVER_URL.includes('localhost') 
+      ? `${SERVER_URL}/create-checkout-session` 
+      : `${SERVER_URL}/api/create-checkout-session`;
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ cart: normalizedCart })
+    });
+
+    // Handle network errors
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText || 'Server error' };
+      }
+      throw new Error(errorData.error || `Server error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.sessionId) {
+      // Save cart to sessionStorage before redirect (so it's available after payment)
+      sessionStorage.setItem('pendingOrder', JSON.stringify(normalizedCart));
+      console.log('💾 Cart saved to sessionStorage before redirect');
+      
+      // Redirect to Stripe Checkout
+      const result = await stripe.redirectToCheckout({ 
+        sessionId: data.sessionId 
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+    } else if (data.url) {
+      // Direct redirect URL
+      window.location.href = data.url;
+    } else {
+      throw new Error('Invalid server response: No sessionId or url');
+    }
+  } catch (error) {
+    console.error('Checkout error:', error);
+    
+    // More user-friendly error messages
+    let errorMsg = 'Checkout failed. ';
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      errorMsg += 'Cannot connect to server. Make sure the server is running on ' + SERVER_URL;
+    } else if (error.message.includes('CORS')) {
+      errorMsg += 'CORS error. Check server configuration.';
+    } else {
+      errorMsg += error.message;
+    }
+    
+    showMessage(errorMsg, "#dc3545");
+    
+    // Reset button state
+    checkoutBtn.disabled = false;
+    checkoutText.style.display = 'inline';
+    checkoutLoading.style.display = 'none';
+  }
+}
+
+function showMessage(msg, color) {
+  const box = document.getElementById('msg-box');
+  box.textContent = msg;
+  box.style.background = color;
+  box.className = color === "#dc3545" ? "error" : "";
+  box.style.display = 'block';
+  setTimeout(() => { 
+    box.style.display = 'none'; 
+  }, 5000);
+}
+
+// Initialize cart on page load
+renderCart();
+</script>
+
+</body>
+</html>
